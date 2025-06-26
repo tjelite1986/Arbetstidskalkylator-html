@@ -11,7 +11,7 @@
             background-color: #f5f5f5;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: white;
             padding: 20px;
@@ -36,7 +36,7 @@
             align-items: center;
         }
         .settings-row label {
-            min-width: 150px;
+            min-width: 180px;
             font-weight: bold;
         }
         .settings-row input {
@@ -49,29 +49,39 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
+            font-size: 14px;
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 6px;
             text-align: center;
         }
         th {
             background-color: #3498db;
             color: white;
             font-weight: bold;
+            font-size: 12px;
         }
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
         .input-field {
             width: 100%;
-            padding: 5px;
+            padding: 3px;
             border: none;
             background: transparent;
             text-align: center;
+            font-size: 12px;
+        }
+        .checkbox-field {
+            width: auto;
+            margin: 0;
         }
         .weekend {
             background-color: #fff3cd !important;
+        }
+        .red-day {
+            background-color: #ffebee !important;
         }
         .summary {
             background: #e8f5e8;
@@ -91,6 +101,12 @@
             border-top: 2px solid #27ae60;
             padding-top: 10px;
             margin-top: 10px;
+        }
+        .tax-section {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            margin-top: 10px;
+            padding-top: 10px;
         }
         .ob-legend {
             background: #f8f9fa;
@@ -134,6 +150,10 @@
                 <input type="number" id="eveningRate" value="50" step="0.01"> % av grundlön
             </div>
             <div class="settings-row">
+                <label>Vardagar efter 20:00 (70%):</label>
+                <input type="number" id="lateEveningRate" value="70" step="0.01"> % av grundlön
+            </div>
+            <div class="settings-row">
                 <label>Lördag från 12:00 (100%):</label>
                 <input type="number" id="saturdayRate" value="100" step="0.01"> % av grundlön
             </div>
@@ -145,14 +165,20 @@
                 <label>Helgtillägg (100%):</label>
                 <input type="number" id="holidayRate" value="100" step="0.01"> % av grundlön
             </div>
+            <div class="settings-row">
+                <label>Skattesats (%):</label>
+                <input type="number" id="taxRate" value="30" step="0.01"> % av bruttolön
+            </div>
         </div>
 
         <div class="ob-legend">
             <h3>OB-tillägg förklaring:</h3>
             <p><strong>Vardagar från 18:15:</strong> 50% av grundlön (måndag-fredag)</p>
+            <p><strong>Vardagar efter 20:00:</strong> 70% av grundlön (måndag-fredag)</p>
             <p><strong>Lördag från 12:00:</strong> 100% av grundlön</p>
             <p><strong>Söndag hela dagen:</strong> 100% av grundlön</p>
             <p><strong>Helgtillägg:</strong> 100% av grundlön (alla timmar på helgdagar)</p>
+            <p><strong>Röd dag:</strong> Kryssa i för att räkna dagen som helgdag (100% tillägg)</p>
         </div>
 
         <button class="btn" onclick="addWeek()">➕ Lägg till vecka</button>
@@ -176,6 +202,10 @@
                 <span id="totalEveningPay">0 kr</span>
             </div>
             <div class="summary-row">
+                <span>Vardagar efter 20:00:</span>
+                <span id="totalLateEveningPay">0 kr</span>
+            </div>
+            <div class="summary-row">
                 <span>Lördag från 12:00:</span>
                 <span id="totalSaturdayPay">0 kr</span>
             </div>
@@ -188,8 +218,16 @@
                 <span id="totalHolidayPay">0 kr</span>
             </div>
             <div class="summary-row total">
-                <span>TOTAL LÖN:</span>
+                <span>BRUTTOLÖN:</span>
                 <span id="grandTotal">0 kr</span>
+            </div>
+            <div class="summary-row tax-section">
+                <span>Skatt (<span id="taxRateDisplay">30</span>%):</span>
+                <span id="totalTax">0 kr</span>
+            </div>
+            <div class="summary-row total">
+                <span>NETTOLÖN (efter skatt):</span>
+                <span id="netTotal">0 kr</span>
             </div>
         </div>
     </div>
@@ -225,13 +263,16 @@
                         <tr>
                             <th>Datum</th>
                             <th>Dag</th>
+                            <th>Röd dag</th>
                             <th>Starttid</th>
                             <th>Sluttid</th>
                             <th>Rast (min)</th>
                             <th>Arbetstid</th>
                             <th>Grundlön</th>
                             <th>OB-tillägg</th>
-                            <th>Totalt</th>
+                            <th>Brutto</th>
+                            <th>Skatt</th>
+                            <th>Netto</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -252,9 +293,10 @@
             for (let i = 0; i < 7; i++) {
                 const isWeekend = i >= 5;
                 html += `
-                    <tr class="${isWeekend ? 'weekend' : ''}">
+                    <tr class="${isWeekend ? 'weekend' : ''}" id="row_${weekNum}_${i}">
                         <td><input type="date" class="input-field" id="date_${weekNum}_${i}" onchange="updateDayName(${weekNum}, ${i})"></td>
                         <td id="dayName_${weekNum}_${i}">${days[i]}</td>
+                        <td><input type="checkbox" class="checkbox-field" id="redDay_${weekNum}_${i}" onchange="updateRedDay(${weekNum}, ${i})"></td>
                         <td><input type="time" class="input-field" id="start_${weekNum}_${i}" onchange="calculateRow(${weekNum}, ${i})"></td>
                         <td><input type="time" class="input-field" id="end_${weekNum}_${i}" onchange="calculateRow(${weekNum}, ${i})"></td>
                         <td><input type="number" class="input-field" id="break_${weekNum}_${i}" value="0" min="0" onchange="calculateRow(${weekNum}, ${i})"></td>
@@ -262,6 +304,8 @@
                         <td id="basePay_${weekNum}_${i}">0 kr</td>
                         <td id="obPay_${weekNum}_${i}">0 kr</td>
                         <td id="total_${weekNum}_${i}">0 kr</td>
+                        <td id="tax_${weekNum}_${i}">0 kr</td>
+                        <td id="net_${weekNum}_${i}">0 kr</td>
                     </tr>
                 `;
             }
@@ -286,18 +330,38 @@
         function updateDayName(weekNum, dayIndex) {
             const dateInput = document.getElementById(`date_${weekNum}_${dayIndex}`);
             const dayNameCell = document.getElementById(`dayName_${weekNum}_${dayIndex}`);
+            const redDayCheckbox = document.getElementById(`redDay_${weekNum}_${dayIndex}`);
             
             if (dateInput.value) {
                 const date = new Date(dateInput.value);
                 const days = ['Söndag', 'Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag'];
                 dayNameCell.textContent = days[date.getDay()];
                 
-                // Update row styling based on day
-                const row = dateInput.closest('tr');
-                if (date.getDay() === 0 || date.getDay() === 6) {
+                // Auto-check red day for Sundays and holidays
+                const isHoliday = holidays.includes(dateInput.value);
+                const isSunday = date.getDay() === 0;
+                redDayCheckbox.checked = isHoliday || isSunday;
+                
+                updateRedDay(weekNum, dayIndex);
+                calculateRow(weekNum, dayIndex);
+            }
+        }
+
+        function updateRedDay(weekNum, dayIndex) {
+            const row = document.getElementById(`row_${weekNum}_${dayIndex}`);
+            const redDayCheckbox = document.getElementById(`redDay_${weekNum}_${dayIndex}`);
+            const dateInput = document.getElementById(`date_${weekNum}_${dayIndex}`);
+            
+            if (dateInput.value) {
+                const date = new Date(dateInput.value);
+                const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                
+                // Update row styling
+                row.classList.remove('weekend', 'red-day');
+                if (redDayCheckbox.checked) {
+                    row.classList.add('red-day');
+                } else if (isWeekend) {
                     row.classList.add('weekend');
-                } else {
-                    row.classList.remove('weekend');
                 }
                 
                 calculateRow(weekNum, dayIndex);
@@ -314,21 +378,22 @@
             return minutes / 60;
         }
 
-        function calculateOB(startTime, endTime, date, workMinutes) {
+        function calculateOB(startTime, endTime, date, workMinutes, isRedDay) {
             const dateObj = new Date(date);
             const dayOfWeek = dateObj.getDay(); // 0=söndag, 1=måndag, ..., 6=lördag
-            const isHoliday = holidays.includes(date);
             
             let eveningMinutes = 0; // Vardagar från 18:15
+            let lateEveningMinutes = 0; // Vardagar efter 20:00
             let saturdayMinutes = 0; // Lördag från 12:00
             let sundayMinutes = 0; // Söndag hela dagen
             let holidayMinutes = 0; // Helgdagar hela dagen
 
-            // If it's a holiday, all work time gets holiday rate
-            if (isHoliday) {
+            // If it's marked as red day, all work time gets holiday rate
+            if (isRedDay) {
                 holidayMinutes = workMinutes;
                 return {
                     evening: eveningMinutes,
+                    lateEvening: lateEveningMinutes,
                     saturday: saturdayMinutes,
                     sunday: sundayMinutes,
                     holiday: holidayMinutes
@@ -340,6 +405,7 @@
                 sundayMinutes = workMinutes;
                 return {
                     evening: eveningMinutes,
+                    lateEvening: lateEveningMinutes,
                     saturday: saturdayMinutes,
                     sunday: sundayMinutes,
                     holiday: holidayMinutes
@@ -358,25 +424,39 @@
                 
                 return {
                     evening: eveningMinutes,
+                    lateEvening: lateEveningMinutes,
                     saturday: saturdayMinutes,
                     sunday: sundayMinutes,
                     holiday: holidayMinutes
                 };
             }
 
-            // Weekdays (Monday-Friday): 50% from 18:15
+            // Weekdays (Monday-Friday): Calculate OB rates
             if (dayOfWeek >= 1 && dayOfWeek <= 5) {
                 const eveningStart = 18 * 60 + 15; // 18:15 in minutes
+                const lateEveningStart = 20 * 60; // 20:00 in minutes
+                const workStart = startTime;
+                const workEnd = startTime + workMinutes;
                 
-                if (startTime + workMinutes > eveningStart) {
-                    const obStart = Math.max(startTime, eveningStart);
-                    const obEnd = startTime + workMinutes;
-                    eveningMinutes = Math.max(0, obEnd - obStart);
+                if (workEnd > eveningStart) {
+                    // Work extends past 18:15
+                    const obStart = Math.max(workStart, eveningStart);
+                    
+                    if (workEnd > lateEveningStart) {
+                        // Work extends past 20:00
+                        const eveningEnd = lateEveningStart;
+                        eveningMinutes = Math.max(0, eveningEnd - obStart);
+                        lateEveningMinutes = Math.max(0, workEnd - lateEveningStart);
+                    } else {
+                        // Work ends before 20:00
+                        eveningMinutes = Math.max(0, workEnd - obStart);
+                    }
                 }
             }
 
             return {
                 evening: eveningMinutes,
+                lateEvening: lateEveningMinutes,
                 saturday: saturdayMinutes,
                 sunday: sundayMinutes,
                 holiday: holidayMinutes
@@ -388,6 +468,7 @@
             const endInput = document.getElementById(`end_${weekNum}_${dayIndex}`);
             const breakInput = document.getElementById(`break_${weekNum}_${dayIndex}`);
             const dateInput = document.getElementById(`date_${weekNum}_${dayIndex}`);
+            const redDayCheckbox = document.getElementById(`redDay_${weekNum}_${dayIndex}`);
 
             if (!startInput.value || !endInput.value || !dateInput.value) return;
 
@@ -406,38 +487,48 @@
             
             // Get rates
             const basePay = parseFloat(document.getElementById('basePay').value);
-            const eveningRate = parseFloat(document.getElementById('eveningRate').value) / 100; // Convert % to decimal
+            const eveningRate = parseFloat(document.getElementById('eveningRate').value) / 100;
+            const lateEveningRate = parseFloat(document.getElementById('lateEveningRate').value) / 100;
             const saturdayRate = parseFloat(document.getElementById('saturdayRate').value) / 100;
             const sundayRate = parseFloat(document.getElementById('sundayRate').value) / 100;
             const holidayRate = parseFloat(document.getElementById('holidayRate').value) / 100;
+            const taxRate = parseFloat(document.getElementById('taxRate').value) / 100;
 
             // Calculate OB
-            const ob = calculateOB(startMinutes, startMinutes + workMinutes, dateInput.value, workMinutes);
+            const ob = calculateOB(startMinutes, startMinutes + workMinutes, dateInput.value, workMinutes, redDayCheckbox.checked);
             
             // Calculate pay
             const basePayAmount = workHours * basePay;
             const eveningPayAmount = minutesToHours(ob.evening) * basePay * eveningRate;
+            const lateEveningPayAmount = minutesToHours(ob.lateEvening) * basePay * lateEveningRate;
             const saturdayPayAmount = minutesToHours(ob.saturday) * basePay * saturdayRate;
             const sundayPayAmount = minutesToHours(ob.sunday) * basePay * sundayRate;
             const holidayPayAmount = minutesToHours(ob.holiday) * basePay * holidayRate;
             
-            const obTotal = eveningPayAmount + saturdayPayAmount + sundayPayAmount + holidayPayAmount;
+            const obTotal = eveningPayAmount + lateEveningPayAmount + saturdayPayAmount + sundayPayAmount + holidayPayAmount;
             const totalPay = basePayAmount + obTotal;
+            const taxAmount = totalPay * taxRate;
+            const netPay = totalPay - taxAmount;
 
             // Update display
             document.getElementById(`hours_${weekNum}_${dayIndex}`).textContent = workHours.toFixed(1);
             document.getElementById(`basePay_${weekNum}_${dayIndex}`).textContent = Math.round(basePayAmount) + ' kr';
             document.getElementById(`obPay_${weekNum}_${dayIndex}`).textContent = Math.round(obTotal) + ' kr';
             document.getElementById(`total_${weekNum}_${dayIndex}`).textContent = Math.round(totalPay) + ' kr';
+            document.getElementById(`tax_${weekNum}_${dayIndex}`).textContent = Math.round(taxAmount) + ' kr';
+            document.getElementById(`net_${weekNum}_${dayIndex}`).textContent = Math.round(netPay) + ' kr';
         }
 
         function calculateAll() {
             let totalHours = 0;
             let totalBasePay = 0;
             let totalEveningPay = 0;
+            let totalLateEveningPay = 0;
             let totalSaturdayPay = 0;
             let totalSundayPay = 0;
             let totalHolidayPay = 0;
+
+            const taxRate = parseFloat(document.getElementById('taxRate').value) / 100;
 
             for (let week = 1; week <= weekCounter; week++) {
                 for (let day = 0; day < 7; day++) {
@@ -445,6 +536,7 @@
                     const endInput = document.getElementById(`end_${week}_${day}`);
                     const breakInput = document.getElementById(`break_${week}_${day}`);
                     const dateInput = document.getElementById(`date_${week}_${day}`);
+                    const redDayCheckbox = document.getElementById(`redDay_${week}_${day}`);
 
                     if (!startInput?.value || !endInput?.value || !dateInput?.value) continue;
 
@@ -463,6 +555,7 @@
                     // Get rates
                     const basePay = parseFloat(document.getElementById('basePay').value);
                     const eveningRate = parseFloat(document.getElementById('eveningRate').value) / 100;
+                    const lateEveningRate = parseFloat(document.getElementById('lateEveningRate').value) / 100;
                     const saturdayRate = parseFloat(document.getElementById('saturdayRate').value) / 100;
                     const sundayRate = parseFloat(document.getElementById('sundayRate').value) / 100;
                     const holidayRate = parseFloat(document.getElementById('holidayRate').value) / 100;
@@ -471,31 +564,41 @@
                     totalBasePay += workHours * basePay;
 
                     // Calculate OB
-                    const ob = calculateOB(startMinutes, startMinutes + workMinutes, dateInput.value, workMinutes);
+                    const ob = calculateOB(startMinutes, startMinutes + workMinutes, dateInput.value, workMinutes, redDayCheckbox?.checked || false);
                     totalEveningPay += minutesToHours(ob.evening) * basePay * eveningRate;
+                    totalLateEveningPay += minutesToHours(ob.lateEvening) * basePay * lateEveningRate;
                     totalSaturdayPay += minutesToHours(ob.saturday) * basePay * saturdayRate;
                     totalSundayPay += minutesToHours(ob.sunday) * basePay * sundayRate;
                     totalHolidayPay += minutesToHours(ob.holiday) * basePay * holidayRate;
                 }
             }
 
+            const grossTotal = totalBasePay + totalEveningPay + totalLateEveningPay + totalSaturdayPay + totalSundayPay + totalHolidayPay;
+            const totalTax = grossTotal * taxRate;
+            const netTotal = grossTotal - totalTax;
+
             // Update summary
             document.getElementById('totalHours').textContent = totalHours.toFixed(1);
             document.getElementById('totalBasePay').textContent = Math.round(totalBasePay) + ' kr';
             document.getElementById('totalEveningPay').textContent = Math.round(totalEveningPay) + ' kr';
+            document.getElementById('totalLateEveningPay').textContent = Math.round(totalLateEveningPay) + ' kr';
             document.getElementById('totalSaturdayPay').textContent = Math.round(totalSaturdayPay) + ' kr';
             document.getElementById('totalSundayPay').textContent = Math.round(totalSundayPay) + ' kr';
             document.getElementById('totalHolidayPay').textContent = Math.round(totalHolidayPay) + ' kr';
-            document.getElementById('grandTotal').textContent = Math.round(totalBasePay + totalEveningPay + totalSaturdayPay + totalSundayPay + totalHolidayPay) + ' kr';
+            document.getElementById('grandTotal').textContent = Math.round(grossTotal) + ' kr';
+            document.getElementById('taxRateDisplay').textContent = (taxRate * 100).toFixed(1);
+            document.getElementById('totalTax').textContent = Math.round(totalTax) + ' kr';
+            document.getElementById('netTotal').textContent = Math.round(netTotal) + ' kr';
         }
 
         function exportData() {
-            let csv = 'Datum,Dag,Starttid,Sluttid,Rast (min),Arbetstid,Grundlön,OB-tillägg,Totalt\n';
+            let csv = 'Datum,Dag,Röd dag,Starttid,Sluttid,Rast (min),Arbetstid,Grundlön,OB-tillägg,Brutto,Skatt,Netto\n';
             
             for (let week = 1; week <= weekCounter; week++) {
                 for (let day = 0; day < 7; day++) {
                     const dateInput = document.getElementById(`date_${week}_${day}`);
                     const dayName = document.getElementById(`dayName_${week}_${day}`)?.textContent || '';
+                    const redDayCheckbox = document.getElementById(`redDay_${week}_${day}`);
                     const startInput = document.getElementById(`start_${week}_${day}`);
                     const endInput = document.getElementById(`end_${week}_${day}`);
                     const breakInput = document.getElementById(`break_${week}_${day}`);
@@ -503,9 +606,12 @@
                     const basePay = document.getElementById(`basePay_${week}_${day}`)?.textContent || '0 kr';
                     const obPay = document.getElementById(`obPay_${week}_${day}`)?.textContent || '0 kr';
                     const total = document.getElementById(`total_${week}_${day}`)?.textContent || '0 kr';
+                    const tax = document.getElementById(`tax_${week}_${day}`)?.textContent || '0 kr';
+                    const net = document.getElementById(`net_${week}_${day}`)?.textContent || '0 kr';
 
                     if (dateInput?.value) {
-                        csv += `${dateInput.value},${dayName},${startInput?.value || ''},${endInput?.value || ''},${breakInput?.value || '0'},${hours},${basePay},${obPay},${total}\n`;
+                        const redDay = redDayCheckbox?.checked ? 'Ja' : 'Nej';
+                        csv += `${dateInput.value},${dayName},${redDay},${startInput?.value || ''},${endInput?.value || ''},${breakInput?.value || '0'},${hours},${basePay},${obPay},${total},${tax},${net}\n`;
                     }
                 }
             }
@@ -522,9 +628,11 @@
         // Add event listeners to settings inputs
         document.getElementById('basePay').addEventListener('input', calculateAll);
         document.getElementById('eveningRate').addEventListener('input', calculateAll);
+        document.getElementById('lateEveningRate').addEventListener('input', calculateAll);
         document.getElementById('saturdayRate').addEventListener('input', calculateAll);
         document.getElementById('sundayRate').addEventListener('input', calculateAll);
         document.getElementById('holidayRate').addEventListener('input', calculateAll);
+        document.getElementById('taxRate').addEventListener('input', calculateAll);
 
         // Update clock every second
         function updateClock() {
