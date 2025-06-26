@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handel Sverige - Startsida</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+            color: #333;
+            flex-direction: column; /* Alltid kolumnlayout för att menyn ska vara överst */
+        }
+        .topbar { /* Toppmenyn */
+            width: 100%;
+            background-color: #333;
+            color: white;
+            padding: 10px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 60px;
+            box-sizing: border-box;
+        }
+        .topbar h2 {
+            display: none; /* Dölj rubriken i toppmenyn */
+        }
+        .topbar ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            gap: 20px;
+        }
+        .topbar ul li {
+            margin-bottom: 0;
+        }
+        .topbar ul li a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 10px 15px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+            white-space: nowrap;
+        }
+        .topbar ul li a:hover {
+            background-color: #575757;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex; /* Använd flexbox för att centrera innehållet */
+            flex-direction: column;
+            justify-content: center; /* Centrera vertikalt */
+            align-items: center; /* Centrera horisontellt */
+            text-align: center; /* Centrera texten */
+        }
+        .hero-section {
+            max-width: 800px;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 20px; /* Lägg till marginal för att inte klistra mot kanterna */
+        }
+        .hero-section h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .hero-section p {
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .btn {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background: #2980b9;
+        }
+
+        /* Media queries för mobilanpassning på startsidan */
+        @media (max-width: 768px) {
+            .topbar {
+                height: auto;
+                padding: 10px 0;
+            }
+            .topbar ul {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+            }
+            .topbar ul li a {
+                padding: 8px 12px;
+                font-size: 0.9em;
+            }
+
+            .main-content {
+                padding: 15px;
+            }
+            .hero-section {
+                padding: 20px;
+                margin: 15px;
+            }
+            .hero-section h1 {
+                font-size: 1.8em;
+            }
+            .hero-section p {
+                font-size: 0.95em;
+            }
+            .btn {
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <h2>Navigation</h2>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/calculator.html">Calculator</a></li>
+        </ul>
+    </div>
+    <div class="main-content">
+        <div class="hero-section">
+            <h1>Välkommen till Handel Sverige</h1>
+            <p>Din pålitliga partner för att beräkna löner och OB-tillägg enligt Handels kollektivavtal. Vår tidrapportskalkylator är designad för att göra lönehanteringen enkel och transparent för både anställda och arbetsgivare inom handelssektorn.</p>
+            <p>Få en tydlig översikt över dina intjänade pengar, inklusive grundlön och alla OB-tillägg, med bara några klick.</p>
+            <a href="/calculator.html" class="btn">Gå till Kalkylatorn</a>
+        </div>
+    </div>
+</body>
+</html>
