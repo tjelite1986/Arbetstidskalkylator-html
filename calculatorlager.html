@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Timesheet Calculator - Lager (Handelsavtalet)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+            color: #333;
+            flex-direction: column;
+        }
+        .topbar {
+            width: 100%;
+            background-color: #333;
+            color: white;
+            padding: 10px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 60px;
+            box-sizing: border-box;
+        }
+        .topbar h2 {
+            display: none;
+        }
+        .topbar ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            gap: 20px;
+        }
+        .topbar ul li {
+            margin-bottom: 0;
+        }
+        .topbar ul li a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 10px 15px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+            white-space: nowrap;
+        }
+        .topbar ul li a:hover {
+            background-color: #575757;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .settings-section {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .settings-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .settings-row label {
+            min-width: 180px;
+            font-weight: bold;
+        }
+        .settings-row input {
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            width: 100px;
+        }
+        .ob-settings {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .ob-settings .setting-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .ob-settings input[type="number"] {
+            width: 60px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: center;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .input-field {
+            width: 100%;
+            padding: 3px;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-size: 12px;
+        }
+        .input-field[type="date"] {
+            width: 120px;
+            box-sizing: border-box;
+        }
+        .checkbox-field {
+            width: auto;
+            margin: 0;
+        }
+        .weekend {
+            background-color: #fff3cd !important;
+        }
+        .red-day {
+            background-color: #ffebee !important;
+        }
+        .summary {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .total {
+            font-size: 1.2em;
+            color: #27ae60;
+            border-top: 2px solid #27ae60;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        .tax-section {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+        .ob-legend {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .ob-legend h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .btn {
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #2980b9;
+        }
+        .delete-row-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        .delete-row-btn:hover {
+            background-color: #c0392b;
+        }
+
+        /* Footer Styles */
+        .footer {
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            margin-top: auto;
+            flex-shrink: 0;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .footer a:hover {
+            color: #66b3ff;
+        }
+
+        /* Media queries for responsiveness */
+        @media (max-width: 768px) {
+            .topbar {
+                height: auto;
+                padding: 10px 0;
+            }
+            .topbar ul {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+            }
+            .topbar ul li a {
+                padding: 8px 12px;
+                font-size: 0.9em;
+            }
+
+            .main-content {
+                padding: 15px;
+            }
+            .container.calculator-wrapper {
+                width: 100%;
+                box-sizing: border-box;
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.5em;
+                margin-bottom: 20px;
+            }
+            .ob-legend {
+                padding: 10px;
+            }
+            .ob-legend ul {
+                padding-left: 20px;
+            }
+            .settings-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .settings-row label {
+                min-width: unset;
+                width: 100%;
+                font-size: 0.9em;
+            }
+            .settings-row input {
+                width: calc(100% - 10px);
+                box-sizing: border-box;
+            }
+            .ob-settings {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .ob-settings .setting-group {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .ob-settings input[type="number"] {
+                width: 80px;
+            }
+
+            table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+            th, td {
+                font-size: 10px;
+                padding: 4px;
+            }
+            .input-field {
+                font-size: 10px;
+            }
+            .input-field[type="date"] {
+                width: 100px;
+            }
+            .delete-row-btn {
+                padding: 3px 6px;
+                font-size: 0.7em;
+            }
+
+            .summary {
+                padding: 15px;
+                font-size: 0.9em;
+            }
+            .summary-row {
+                flex-direction: column;
+                align-items: flex-start;
+                margin-bottom: 8px;
+            }
+            .summary-row span:first-child {
+                font-weight: normal;
+                margin-bottom: 2px;
+            }
+            .summary-row span:last-child {
+                font-weight: bold;
+            }
+            .total {
+                font-size: 1.1em;
+                padding-top: 8px;
+                margin-top: 8px;
+            }
+            .btn {
+                padding: 8px 15px;
+                font-size: 0.9em;
+                margin: 4px;
+            }
+            .footer {
+                padding: 15px;
+                font-size: 0.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <h2>Navigation</h2>
+        <ul>
+            <li><a href="/">Hem</a></li>
+            <li><a href="/calculator.html">Butik Kalkylator</a></li>
+            <li><a href="/calculatorlager.html">Lager Kalkylator</a></li>
+        </ul>
+    </div>
+    <div class="main-content">
+        <div class="container calculator-wrapper">
+            <h1>Tidrapportskalkylator Lager (Handelsavtalet)</h1>
+
+            <div class="ob-legend">
+                <h3>OB-tider Lager (Handelsavtalet)</h3>
+                <ul>
+                    <li>OB 40%: Måndag–fredag 06:00–07:00 & 18:00–23:00, Lördag 06:00–23:00</li>
+                    <li>OB 70%: Måndag 00:00–06:00, Måndag–fredag 23:00–06:00, Lördag 00:00–06:00, Lördag 23:00–24:00</li>
+                    <li>OB 100%: Söndag och helgdag (hela dagen). Detta inkluderar **Julafton, Nyårsafton och Midsommarafton** (hela dagen). Påskafton räknas som vanlig lördag.</li>
+                </ul>
+            </div>
+
+            <div class="settings-section">
+                <h2>Generella Inställningar</h2>
+                <div class="settings-row">
+                    <label for="hourlyRate">Ordinarie Timlön:</label>
+                    <input type="number" id="hourlyRate" value="162.98" onchange="updateSummary()">
+                    <label for="taxRate">Skatteavdrag (%):</label>
+                    <input type="number" id="taxRate" value="30" onchange="updateSummary()">
+                </div>
+                <div class="ob-settings">
+                    <div class="setting-group">
+                        <label for="ob40Rate">OB 40%:</label>
+                        <input type="number" id="ob40Rate" value="40" onchange="updateSummary()">
+                    </div>
+                    <div class="setting-group">
+                        <label for="ob70Rate">OB 70%:</label>
+                        <input type="number" id="ob70Rate" value="70" onchange="updateSummary()">
+                    </div>
+                    <div class="setting-group">
+                        <label for="ob100Rate">OB 100%:</label>
+                        <input type="number" id="ob100Rate" value="100" onchange="updateSummary()">
+                    </div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Datum</th>
+                        <th>Dag</th>
+                        <th>Starttid</th>
+                        <th>Sluttid</th>
+                        <th>Rast (min)</th>
+                        <th>Helgdag?</th>
+                        <th>Timmar</th>
+                        <th>OB 40% Timmar</th>
+                        <th>OB 70% Timmar</th>
+                        <th>OB 100% Timmar</th>
+                        <th>Grundlön</th>
+                        <th>OB-tillägg</th>
+                        <th>Totalt (exkl. skatt)</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="timesheetBody">
+                </tbody>
+            </table>
+
+            <div class="summary">
+                <h2>Månadssummering</h2>
+                <div class="summary-row">
+                    <span>Totala Arbetstimmar:</span>
+                    <span id="totalHours">0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Total OB 40% Timmar:</span>
+                    <span id="totalOb40Hours">0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Total OB 70% Timmar:</span>
+                    <span id="totalOb70Hours">0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Total OB 100% Timmar:</span>
+                    <span id="totalOb100Hours">0.00</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Bruttolön (före skatt):</span>
+                    <span id="grossPay">0.00 kr</span>
+                </div>
+                <div class="tax-section summary-row">
+                    <span>Beräknat Skatteavdrag (<span id="displayTaxRate">30</span>%):</span>
+                    <span id="taxDeduction">0.00 kr</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Utbetald Lön (efter skatt):</span>
+                    <span id="netPay">0.00 kr</span>
+                </div>
+            </div>
+
+            <button class="btn" onclick="addDay()">Lägg till dag</button>
+            <button class="btn" onclick="clearAll()">Rensa allt</button>
+            <button class="btn" onclick="exportData()">Exportera data</button>
+            <input type="file" id="importFile" accept=".csv" style="display: none;" onchange="importData(event)">
+            <button class="btn" onclick="document.getElementById('importFile').click()">Importera data</button>
+
+            <p class="error" id="errorMessages" style="color: red; margin-top: 20px;"></p>
+
+            <script>
+                let dayCounter = 0;
+                let dailyData = {};
+                const hourlyRateInput = document.getElementById('hourlyRate');
+                const taxRateInput = document.getElementById('taxRate');
+                const ob40RateInput = document.getElementById('ob40Rate');
+                const ob70RateInput = document.getElementById('ob70Rate');
+                const ob100RateInput = document.getElementById('ob100Rate');
+                const timesheetBody = document.getElementById('timesheetBody');
+
+                // Helgdagar som ger 100% OB hela dagen (allmänna röda dagar i Sverige)
+                const holidays = [
+                    "2025-01-01", // Nyårsdagen
+                    "2025-01-06", // Trettondagen
+                    "2025-04-18", // Långfredagen
+                    "2025-04-20", // Påskdagen (är en söndag, men explicit här för tydlighet)
+                    "2025-04-21", // Annandag påsk
+                    "2025-05-01", // Första maj
+                    "2025-05-29", // Kristi himmelsfärds dag
+                    "2025-06-06", // Sveriges nationaldag
+                    "2025-06-21", // Midsommardagen (är en lördag, men behandlas som helgdag här)
+                    "2025-11-01", // Alla helgons dag (är en lördag, men behandlas som helgdag här)
+                    "2025-12-25", // Juldagen
+                    "2025-12-26"  // Annandag jul
+                ];
+
+                // Dagar som ger 100% OB hela dagen SPECIFIKT för Handels lager (rörliga helgdagar)
+                const handelsLager100ObDays = [
+                    "2025-06-20", // Midsommarafton
+                    "2025-12-24", // Julafton
+                    "2025-12-31"  // Nyårsafton
+                ];
+
+                document.addEventListener('DOMContentLoaded', () => {
+                    addDay();
+                });
+
+                function formatTime(date) {
+                    return date.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+                }
+
+                function addDay(initialData = {}) {
+                    dayCounter++;
+                    const rowId = `row-${dayCounter}`;
+                    const now = new Date();
+                    const dateId = initialData.date || now.toISOString().slice(0, 10);
+
+                    const defaultStartTime = "09:00";
+                    const defaultEndTime = "17:00";
+
+                    const row = timesheetBody.insertRow();
+                    row.id = rowId;
+
+                    row.innerHTML = `
+                        <td><input type="date" class="input-field" id="date-${rowId}" value="${dateId}" onchange="updateRowDate('${rowId}')"></td>
+                        <td id="dayOfWeek-${rowId}">${initialData.dayOfWeek || ''}</td>
+                        <td><input type="time" class="input-field" id="start-${rowId}" value="${initialData.startTime || defaultStartTime}" onchange="calculateRow('${rowId}')"></td>
+                        <td><input type="time" class="input-field" id="end-${rowId}" value="${initialData.endTime || defaultEndTime}" onchange="calculateRow('${rowId}')"></td>
+                        <td><input type="number" class="input-field" id="rest-${rowId}" value="${initialData.restMinutes || 0}" onchange="calculateRow('${rowId}')"></td>
+                        <td><input type="checkbox" class="checkbox-field" id="holiday-${rowId}" ${initialData.isHoliday ? 'checked' : ''} onchange="calculateRow('${rowId}')"></td>
+                        <td id="hours-${rowId}">0.00</td>
+                        <td id="ob40-${rowId}">0.00</td>
+                        <td id="ob70-${rowId}">0.00</td>
+                        <td id="ob100-${rowId}">0.00</td>
+                        <td id="grundlon-${rowId}">0.00</td>
+                        <td id="obTullagg-${rowId}">0.00</td>
+                        <td id="totalDayPay-${rowId}">0.00</td>
+                        <td><button class="delete-row-btn" onclick="deleteRow('${rowId}')">X</button></td>
+                    `;
+
+                    dailyData[rowId] = {
+                        date: dateId,
+                        hours: 0, ob40: 0, ob70: 0, ob100: 0, grundlon: 0, obTullagg: 0, totalDayPay: 0
+                    };
+
+                    updateRowDate(rowId);
+                }
+
+                function deleteRow(rowId) {
+                    const row = document.getElementById(rowId);
+                    if (row) {
+                        row.remove();
+                        delete dailyData[rowId];
+                        updateSummary();
+                    }
+                }
+
+                function updateRowDate(rowId) {
+                    const dateInput = document.getElementById(`date-${rowId}`);
+                    const dateVal = dateInput.value;
+                    const date = new Date(dateVal + 'T12:00:00'); // Add time to avoid timezone issues for date calculations
+
+                    if (isNaN(date.getTime())) {
+                        document.getElementById(`dayOfWeek-${rowId}`).innerText = "Ogiltigt datum";
+                        document.getElementById(rowId).className = '';
+                        calculateRow(rowId);
+                        return;
+                    }
+
+                    const options = { weekday: 'short' };
+                    const dayOfWeekText = date.toLocaleDateString('sv-SE', options);
+                    const dayOfWeekNum = date.getDay(); // 0-Sunday, 1-Monday, ..., 6-Saturday
+
+                    document.getElementById(`dayOfWeek-${rowId}`).innerText = dayOfWeekText;
+
+                    const dateId = date.toISOString().slice(0, 10);
+                    dailyData[rowId].date = dateId;
+
+                    let rowClass = '';
+                    const isActualHoliday = holidays.includes(dateId);
+                    const isHandelsLager100ObDay = handelsLager100ObDays.includes(dateId); // Julafton, Midsommarafton, Nyårsafton för Handels lager
+
+                    // Söndagar, officiella helgdagar, eller speciella Handels lager 100% OB-dagar
+                    if (dayOfWeekNum === 0 || isActualHoliday || isHandelsLager100ObDay) {
+                        rowClass = 'red-day';
+                        // Markera checkboxen om den inte redan är det
+                        if (!document.getElementById(`holiday-${rowId}`).checked) {
+                            document.getElementById(`holiday-${rowId}`).checked = true;
+                        }
+                    } else if (dayOfWeekNum === 6) { // Vanlig lördag (Påskafton räknas som vanlig lördag här)
+                        rowClass = 'weekend';
+                        // Se till att checkboxen är omarkerad om det är Påskafton som bara är en vanlig lördag
+                        if (dateId === "2025-04-19" && document.getElementById(`holiday-${rowId}`).checked) {
+                            document.getElementById(`holiday-${rowId}`).checked = false;
+                        }
+                    } else { // Vanlig vardag
+                        document.getElementById(rowId).classList.remove('red-day', 'weekend');
+                        // Se till att checkboxen är omarkerad om den inte är en helgdag eller Handels lager 100% OB-dag
+                        if (document.getElementById(`holiday-${rowId}`).checked) {
+                            document.getElementById(`holiday-${rowId}`).checked = false;
+                        }
+                    }
+
+                    document.getElementById(rowId).className = rowClass;
+
+                    calculateRow(rowId);
+                }
+
+                function parseTimeToMinutes(timeStr) {
+                    if (!timeStr) return null;
+                    const [hours, minutes] = timeStr.split(':').map(Number);
+                    return hours * 60 + minutes;
+                }
+
+                function calculateRow(rowId) {
+                    const dateInput = document.getElementById(`date-${rowId}`);
+                    const dateVal = dateInput.value;
+                    const date = new Date(dateVal + 'T12:00:00');
+                    const dayOfWeek = date.getDay(); // 0-Sunday, 1-Monday, ..., 6-Saturday
+                    const dateId = date.toISOString().slice(0, 10);
+
+                    const startInput = document.getElementById(`start-${rowId}`);
+                    const endInput = document.getElementById(`end-${rowId}`);
+                    const restInput = document.getElementById(`rest-${rowId}`);
+                    const holidayCheckbox = document.getElementById(`holiday-${rowId}`);
+
+                    const startTime = parseTimeToMinutes(startInput.value);
+                    const endTime = parseTimeToMinutes(endInput.value);
+                    const restMinutes = parseInt(restInput.value) || 0;
+
+                    // Bestäm om det är en "röd dag" (100% OB hela dagen) baserat på datum och kollektivavtal
+                    const isActualHoliday = holidays.includes(dateId);
+                    const isHandelsLager100ObDay = handelsLager100ObDays.includes(dateId); // Julafton, Midsommarafton, Nyårsafton för Handels lager
+                    const isRedDayBasedOnDate = isActualHoliday || isHandelsLager100ObDay || dayOfWeek === 0; // Söndag
+
+                    let hoursWorked = 0;
+                    let ob40Hours = 0;
+                    let ob70Hours = 0;
+                    let ob100Hours = 0;
+
+                    if (startTime !== null && endTime !== null) {
+                        let totalMinutes = 0;
+                        if (endTime > startTime) {
+                            totalMinutes = endTime - startTime;
+                        } else { // Övernattningsskift
+                            totalMinutes = (24 * 60 - startTime) + endTime;
+                        }
+                        totalMinutes = Math.max(0, totalMinutes - restMinutes);
+
+                        const currentOb40Rate = parseFloat(ob40RateInput.value) / 100 || 0;
+                        const currentOb70Rate = parseFloat(ob70RateInput.value) / 100 || 0;
+                        const currentOb100Rate = parseFloat(ob100RateInput.value) / 100 || 0;
+                        const hourlyRate = parseFloat(hourlyRateInput.value) || 0;
+
+                        // Tidsdefinitioner i minuter på dygnet
+                        const time00_00 = parseTimeToMinutes("00:00");
+                        const time06_00 = parseTimeToMinutes("06:00");
+                        const time07_00 = parseTimeToMinutes("07:00");
+                        const time18_00 = parseTimeToMinutes("18:00");
+                        const time23_00 = parseTimeToMinutes("23:00");
+                        const time24_00 = parseTimeToMinutes("24:00");
+
+                        for (let m = 0; m < totalMinutes; m++) {
+                            const currentMinuteOfDay = (startTime + m) % (24 * 60);
+
+                            // Prioritet: 100% OB dagar först
+                            if (isRedDayBasedOnDate) {
+                                ob100Hours += (1 / 60);
+                            } else if (dayOfWeek >= 1 && dayOfWeek <= 5) { // Vardag (Mån-Fre)
+                                // Måndag 00:00–06:00
+                                if (dayOfWeek === 1 && currentMinuteOfDay >= time00_00 && currentMinuteOfDay < time06_00) {
+                                    ob70Hours += (1 / 60);
+                                }
+                                // Måndag–fredag 06:00–07:00
+                                else if (currentMinuteOfDay >= time06_00 && currentMinuteOfDay < time07_00) {
+                                    ob40Hours += (1 / 60);
+                                }
+                                // Måndag–fredag 18:00–23:00
+                                else if (currentMinuteOfDay >= time18_00 && currentMinuteOfDay < time23_00) {
+                                    ob40Hours += (1 / 60);
+                                }
+                                // Måndag–fredag 23:00–06:00 (nästkommande dag)
+                                else if (currentMinuteOfDay >= time23_00 || currentMinuteOfDay < time06_00) {
+                                    ob70Hours += (1 / 60);
+                                }
+                            } else if (dayOfWeek === 6) { // Lördag (inkluderar Påskafton som vanlig lördag)
+                                // Lördag 00:00–06:00
+                                if (currentMinuteOfDay >= time00_00 && currentMinuteOfDay < time06_00) {
+                                    ob70Hours += (1 / 60);
+                                }
+                                // Lördag 06:00–23:00
+                                else if (currentMinuteOfDay >= time06_00 && currentMinuteOfDay < time23_00) {
+                                    ob40Hours += (1 / 60);
+                                }
+                                // Lördag 23:00–24:00
+                                else if (currentMinuteOfDay >= time23_00 && currentMinuteOfDay < time24_00) {
+                                    ob70Hours += (1 / 60);
+                                }
+                            }
+                        }
+
+                        hoursWorked = totalMinutes / 60;
+
+                        const grundlon = hoursWorked * hourlyRate;
+                        const obTullagg = (ob40Hours * hourlyRate * currentOb40Rate) +
+                                          (ob70Hours * hourlyRate * currentOb70Rate) +
+                                          (ob100Hours * hourlyRate * currentOb100Rate);
+                        const totalDayPay = grundlon + obTullagg;
+
+                        document.getElementById(`hours-${rowId}`).innerText = hoursWorked.toFixed(2);
+                        document.getElementById(`ob40-${rowId}`).innerText = ob40Hours.toFixed(2);
+                        document.getElementById(`ob70-${rowId}`).innerText = ob70Hours.toFixed(2);
+                        document.getElementById(`ob100-${rowId}`).innerText = ob100Hours.toFixed(2);
+                        document.getElementById(`grundlon-${rowId}`).innerText = grundlon.toFixed(2);
+                        document.getElementById(`obTullagg-${rowId}`).innerText = obTullagg.toFixed(2);
+                        document.getElementById(`totalDayPay-${rowId}`).innerText = totalDayPay.toFixed(2);
+
+                        dailyData[rowId] = {
+                            date: dateId,
+                            hours: hoursWorked,
+                            ob40: ob40Hours,
+                            ob70: ob70Hours,
+                            ob100: ob100Hours,
+                            grundlon: grundlon,
+                            obTullagg: obTullagg,
+                            totalDayPay: totalDayPay
+                        };
+                    } else {
+                        document.getElementById(`hours-${rowId}`).innerText = "0.00";
+                        document.getElementById(`ob40-${rowId}`).innerText = "0.00";
+                        document.getElementById(`ob70-${rowId}`).innerText = "0.00";
+                        document.getElementById(`ob100-${rowId}`).innerText = "0.00";
+                        document.getElementById(`grundlon-${rowId}`).innerText = "0.00";
+                        document.getElementById(`obTullagg-${rowId}`).innerText = "0.00";
+                        document.getElementById(`totalDayPay-${rowId}`).innerText = "0.00";
+
+                        dailyData[rowId] = {
+                            date: dateId,
+                            hours: 0, ob40: 0, ob70: 0, ob100: 0, grundlon: 0, obTullagg: 0, totalDayPay: 0
+                        };
+                    }
+
+                    updateSummary();
+                }
+
+                function updateSummary() {
+                    let totalHours = 0;
+                    let totalOb40Hours = 0;
+                    let totalOb70Hours = 0;
+                    let totalOb100Hours = 0;
+                    let grossPay = 0;
+                    const hourlyRate = parseFloat(hourlyRateInput.value) || 0;
+                    const taxRate = parseFloat(taxRateInput.value) || 0;
+
+                    for (const rowId in dailyData) {
+                        const data = dailyData[rowId];
+                        totalHours += data.hours;
+                        totalOb40Hours += data.ob40;
+                        totalOb70Hours += data.ob70;
+                        totalOb100Hours += data.ob100;
+                        grossPay += data.totalDayPay;
+                    }
+
+                    const taxDeduction = grossPay * (taxRate / 100);
+                    const netPay = grossPay - taxDeduction;
+
+                    document.getElementById('totalHours').innerText = totalHours.toFixed(2);
+                    document.getElementById('totalOb40Hours').innerText = totalOb40Hours.toFixed(2);
+                    document.getElementById('totalOb70Hours').innerText = totalOb70Hours.toFixed(2);
+                    document.getElementById('totalOb100Hours').innerText = totalOb100Hours.toFixed(2);
+                    document.getElementById('grossPay').innerText = grossPay.toFixed(2) + " kr";
+                    document.getElementById('taxDeduction').innerText = taxDeduction.toFixed(2) + " kr";
+                    document.getElementById('netPay').innerText = netPay.toFixed(2) + " kr";
+                    document.getElementById('displayTaxRate').innerText = taxRate.toFixed(0);
+                }
+
+                function clearAll() {
+                    timesheetBody.innerHTML = '';
+                    dailyData = {};
+                    dayCounter = 0;
+                    updateSummary();
+                    addDay();
+                }
+
+                function exportData() {
+                    let csvContent = "Datum;Dag;Starttid;Sluttid;Rast (min);Helgdag?;Timmar;OB 40% Timmar;OB 70% Timmar;OB 100% Timmar;Grundlön;OB-tillägg;Totalt (exkl. skatt)\n";
+
+                    const rows = timesheetBody.querySelectorAll('tr');
+                    rows.forEach(row => {
+                        const rowId = row.id;
+                        const dateInput = document.getElementById(`date-${rowId}`);
+                        const dayOfWeek = document.getElementById(`dayOfWeek-${rowId}`).innerText;
+                        const startInput = document.getElementById(`start-${rowId}`);
+                        const endInput = document.getElementById(`end-${rowId}`);
+                        const restInput = document.getElementById(`rest-${rowId}`);
+                        const holidayCheckbox = document.getElementById(`holiday-${rowId}`);
+
+                        const date = dateInput ? dateInput.value : '';
+                        const startTime = startInput ? startInput.value : '';
+                        const endTime = endInput ? endInput.value : '';
+                        const restMinutes = restInput ? restInput.value : '0';
+                        const isHoliday = holidayCheckbox ? (holidayCheckbox.checked ? 'Ja' : 'Nej') : 'Nej';
+
+                        const hours = document.getElementById(`hours-${rowId}`).innerText;
+                        const ob40 = document.getElementById(`ob40-${rowId}`).innerText;
+                        const ob70 = document.getElementById(`ob70-${rowId}`).innerText;
+                        const ob100 = document.getElementById(`ob100-${rowId}`).innerText;
+                        const grundlon = document.getElementById(`grundlon-${rowId}`).innerText;
+                        const obTullagg = document.getElementById(`obTullagg-${rowId}`).innerText;
+                        const totalDayPay = document.getElementById(`totalDayPay-${rowId}`).innerText;
+
+                        csvContent += `"${date}";"${dayOfWeek}";"${startTime}";"${endTime}";"${restMinutes}";"${isHoliday}";"${hours}";"${ob40}";"${ob70}";"${ob100}";"${grundlon}";"${obTullagg}";"${totalDayPay}"\n`;
+                    });
+
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'tidrapport_lager_handels.csv'; // Adjusted filename
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+
+                async function importData(event) {
+                    const file = event.target.files[0];
+                    if (!file) {
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const content = e.target.result;
+                        const lines = content.split('\n').filter(line => line.trim() !== '');
+
+                        if (lines.length < 2) {
+                            alert("Ogiltig CSV-fil. Ingen data att importera (för få rader eller tom fil).");
+                            return;
+                        }
+
+                        const header = lines[0].split(';').map(h => h.trim().replace(/"/g, ''));
+                        const expectedHeaders = ["Datum", "Dag", "Starttid", "Sluttid", "Rast (min)", "Helgdag?", "Timmar", "OB 40% Timmar", "OB 70% Timmar", "OB 100% Timmar", "Grundlön", "OB-tillägg", "Totalt (exkl. skatt)"];
+
+                        if (header.length !== expectedHeaders.length || !expectedHeaders.every((val, index) => val === header[index])) {
+                            alert("CSV-filen har felaktigt format på rubrikerna. Kontrollera att filen är en oförändrad export från denna tidrapport. Förväntade rubriker: " + expectedHeaders.join("; "));
+                            return;
+                        }
+
+                        clearAll();
+                        timesheetBody.innerHTML = '';
+                        dayCounter = 0;
+
+                        for (let i = 1; i < lines.length; i++) {
+                            const values = lines[i].split(';').map(v => v.trim().replace(/"/g, ''));
+
+                            if (values.length >= 6) {
+                                const initialData = {
+                                    date: values[0],
+                                    dayOfWeek: values[1],
+                                    startTime: values[2],
+                                    endTime: values[3],
+                                    restMinutes: parseInt(values[4]) || 0,
+                                    isHoliday: values[5].toLowerCase() === 'ja'
+                                };
+                                addDay(initialData);
+                                const currentAddedRowId = `row-${dayCounter}`;
+                                await new Promise(resolve => setTimeout(resolve, 5));
+                                updateRowDate(currentAddedRowId);
+                            } else {
+                                console.warn(`Skipping malformed row ${i+1}: ${lines[i]}`);
+                                alert(`Varning: Rad ${i+1} i CSV-filen ignorerades på grund av felaktigt format.`);
+                            }
+                        }
+                        updateSummary();
+                        alert("Data importerades framgångsrikt!");
+                        document.getElementById('importFile').value = '';
+                    };
+                    reader.readAsText(file);
+                }
+            </script>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2025 Handel Sverige. Alla rättigheter reserverade.</p>
+        <p>Byggd med <span style="color: red;">&hearts;</span> av <a href="https://github.com/tjelite1986" target="_blank" rel="noopener noreferrer">TJELITE1986</a></p>
+        <p>Frågor? Kontakta oss via GitHub.</p>
+    </div>
+</body>
+</html>
