@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Handel Sverige - Startsida</title>
+    <title>Tidrapportskalkylatorer för Handel & Lager</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
             margin: 0;
-            display: flex;
-            min-height: 100vh;
-            background-color: #f5f5f5;
+            padding: 0;
+            background-color: #f4f7f6;
             color: #333;
-            flex-direction: column; /* Alltid kolumnlayout för att menyn ska vara överst */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
-        .topbar { /* Toppmenyn */
+        .topbar {
             width: 100%;
             background-color: #333;
             color: white;
@@ -28,7 +29,7 @@
             box-sizing: border-box;
         }
         .topbar h2 {
-            display: none; /* Dölj rubriken i toppmenyn */
+            display: none; /* Hide the h2 on desktop as per previous instructions */
         }
         .topbar ul {
             list-style-type: none;
@@ -56,44 +57,119 @@
             flex-grow: 1;
             padding: 20px;
             overflow-y: auto;
-            display: flex; /* Använd flexbox för att centrera innehållet */
-            flex-direction: column;
-            justify-content: center; /* Centrera vertikalt */
-            align-items: center; /* Centrera horisontellt */
-            text-align: center; /* Centrera texten */
         }
-        .hero-section {
-            max-width: 800px;
-            background: white;
-            padding: 40px;
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 30px;
+            background-color: #ffffff;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin: 20px; /* Lägg till marginal för att inte klistra mot kanterna */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
         }
-        .hero-section h1 {
+        h1 {
             color: #2c3e50;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            font-size: 2.2em;
         }
-        .hero-section p {
+        p {
+            font-size: 1.1em;
             line-height: 1.6;
             margin-bottom: 20px;
         }
-        .btn {
+        .button-group {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+        .button-group a {
             display: inline-block;
-            background: #3498db;
+            background-color: #3498db;
             color: white;
-            padding: 12px 25px;
-            border: none;
+            padding: 15px 30px;
             border-radius: 5px;
             text-decoration: none;
-            font-size: 1.1em;
-            transition: background-color 0.3s ease;
+            font-size: 1.2em;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: 100%;
+            max-width: 300px;
+            box-sizing: border-box;
         }
-        .btn:hover {
-            background: #2980b9;
+        .button-group a:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
         }
 
-        /* Media queries för mobilanpassning på startsidan */
+        .info-section {
+            text-align: left;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+        .info-section h2 {
+            color: #34495e;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .info-category {
+            margin-bottom: 30px;
+        }
+        .info-category h3 {
+            color: #3498db;
+            font-size: 1.4em;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+            display: inline-block;
+        }
+        .info-category p, .info-category ul {
+            font-size: 1em;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        .info-category ul {
+            list-style-type: disc;
+            margin-left: 20px;
+        }
+        .info-category li {
+            margin-bottom: 5px;
+        }
+        .info-category a {
+            color: #2980b9;
+            text-decoration: none;
+        }
+        .info-category a:hover {
+            text-decoration: underline;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        .footer {
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            margin-top: auto; /* Push footer to the bottom */
+            flex-shrink: 0;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .footer a {
+            color: #007bff; /* Link color for footer */
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .footer a:hover {
+            color: #66b3ff;
+        }
+
+        /* Responsive adjustments */
         @media (max-width: 768px) {
             .topbar {
                 height: auto;
@@ -108,23 +184,39 @@
                 padding: 8px 12px;
                 font-size: 0.9em;
             }
-
             .main-content {
                 padding: 15px;
             }
-            .hero-section {
-                padding: 20px;
+            .container {
                 margin: 15px;
+                padding: 20px;
             }
-            .hero-section h1 {
+            h1 {
                 font-size: 1.8em;
             }
-            .hero-section p {
-                font-size: 0.95em;
-            }
-            .btn {
-                padding: 10px 20px;
+            p {
                 font-size: 1em;
+            }
+            .button-group a {
+                padding: 12px 20px;
+                font-size: 1.1em;
+            }
+            .info-section {
+                margin-top: 30px;
+                padding-top: 20px;
+            }
+            .info-section h2 {
+                font-size: 1.5em;
+            }
+            .info-category h3 {
+                font-size: 1.2em;
+            }
+            .info-category p, .info-category ul {
+                font-size: 0.9em;
+            }
+            .footer {
+                padding: 15px;
+                font-size: 0.8em;
             }
         }
     </style>
@@ -133,17 +225,62 @@
     <div class="topbar">
         <h2>Navigation</h2>
         <ul>
-            <li><a href="/">Home</a></li>
-            <li><a href="/calculator.html">Calculator</a></li>
+            <li><a href="/">Hem</a></li>
+            <li><a href="/calculator.html">Butik Kalkylator</a></li>
+            <li><a href="/calculatorlager.html">Lager Kalkylator</a></li>
+            <li><a href="/calculatortest/calculatortest.html">Test Kalkylator</a></li>
         </ul>
     </div>
+
     <div class="main-content">
-        <div class="hero-section">
-            <h1>Välkommen till Handel Sverige</h1>
-            <p>Din pålitliga partner för att beräkna löner och OB-tillägg enligt Handels kollektivavtal. Vår tidrapportskalkylator är designad för att göra lönehanteringen enkel och transparent för både anställda och arbetsgivare inom handelssektorn.</p>
-            <p>Få en tydlig översikt över dina intjänade pengar, inklusive grundlön och alla OB-tillägg, med bara några klick.</p>
-            <a href="/calculator.html" class="btn">Gå till Kalkylatorn</a>
+        <div class="container">
+            <h1>Välkommen till Tidrapportskalkylatorn!</h1>
+            <p>Här kan du enkelt beräkna din lön, inklusive OB-tillägg, baserat på dina arbetstider. Vi erbjuder specifika kalkylatorer för dig som arbetar inom <span class="highlight">butik</span> och <span class="highlight">lager</span>, båda anpassade efter <span class="highlight">Handelsanställdas förbunds kollektivavtal</span>.</p>
+            <p>Välj den kalkylator som passar din arbetsplats:</p>
+
+            <div class="button-group">
+                <a href="/calculator.html">Gå till Butik Kalkylator (Handelsavtalet)</a>
+                <a href="/calculatorlager.html">Gå till Lager Kalkylator (Handelsavtalet)</a>
+                <a href="/calculatortest/calculatortest.html">Gå till Test Kalkylator</a>
+            </div>
+
+            <div class="info-section">
+                <h2>Viktig Information för Dig som Anställd</h2>
+                <p>Att känna till dina rättigheter och villkor på arbetsplatsen är grundläggande. Här har vi samlat information och länkar som kan vara till hjälp om du har frågor kring ditt arbete inom butik eller lager.</p>
+
+                <div class="info-category">
+                    <h3>Kollektivavtal</h3>
+                    <p>Kollektivavtalen reglerar anställningsvillkor som lön, arbetstider, OB-tillägg, semester och uppsägningstider. De är centrala för din trygghet på jobbet.</p>
+                    <ul>
+                        <li>För dig som jobbar i <span class="highlight">butik</span> eller på <span class="highlight">lager/e-handel</span> som tillhör Handelsanställdas förbund gäller oftast <a href="https://www.handels.se/dina-avtal/handelns-kollektivavtal/" target="_blank" rel="noopener noreferrer">Handelns Kollektivavtal</a> mellan Handelsanställdas förbund och Svensk Handel.</li>
+                    </ul>
+                </div>
+
+                <div class="info-category">
+                    <h3>Fackförbund</h3>
+                    <p>Ett fackförbund arbetar för att skydda och förbättra medlemmarnas anställningsvillkor. Att vara medlem ger dig stöd och rådgivning.</p>
+                    <ul>
+                        <li>För anställda inom butik och lager/e-handel är det primära fackförbundet <a href="https://www.handels.se/" target="_blank" rel="noopener noreferrer">Handelsanställdas förbund</a>.</li>
+                        <li>Andra relevanta fackförbund kan vara <a href="https://www.unionen.se/" target="_blank" rel="noopener noreferrer">Unionen</a> (för tjänstemän) eller <a href="https://www.lo.se/" target="_blank" rel="noopener noreferrer">LO</a> (Landsorganisationen i Sverige) som är en centralorganisation för många fackförbund.</li>
+                    </ul>
+                </div>
+
+                <div class="info-category">
+                    <h3>A-kassa (Arbetslöshetskassa)</h3>
+                    <p>A-kassan ger ekonomiskt skydd vid arbetslöshet. Det är viktigt att vara medlem i en a-kassa för att kunna få inkomstrelaterad ersättning om du skulle bli arbetslös.</p>
+                    <ul>
+                        <li>Om du är medlem i Handelsanställdas förbund kan du ansluta dig till <a href="https://www.handelsakassa.se/" target="_blank" rel="noopener noreferrer">Handels a-kassa</a>.</li>
+                        <li>För att hitta rätt a-kassa baserat på ditt yrke och fackförbund, besök <a href="https://www.statistika.se/hitta-akassa/" target="_blank" rel="noopener noreferrer">Statistika.se's A-kassaguide</a> eller respektive fackförbunds hemsida.</li>
+                    </ul>
+                </div>
+            </div>
         </div>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2025 Handel Sverige. Alla rättigheter reserverade.</p>
+        <p>Byggd med <span style="color: red;">&hearts;</span> av <a href="https://github.com/tjelite1986" target="_blank" rel="noopener noreferrer">TJELITE1986</a></p>
+        <p>Frågor? Kontakta oss via GitHub.</p>
     </div>
 </body>
 </html>
