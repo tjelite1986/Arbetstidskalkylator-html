@@ -104,7 +104,23 @@
             padding: 5px;
             border: 1px solid #ddd;
             border-radius: 3px;
-            width: 100px;
+            width: 100px; /* Standardbredd */
+            box-sizing: border-box; /* Se till att padding inte ökar bredden */
+        }
+
+        /* Specifik stil för month input för bättre utseende */
+        .settings-row input[type="month"] {
+            width: 150px; /* Bredare för att visa år och månad */
+            padding: 6px;
+        }
+        
+        .settings-row select {
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            width: 150px; /* Eller anpassa efter önskemål */
+            box-sizing: border-box;
+            height: 30px; /* Matchar input-höjden bättre */
         }
 
         /* Tabellstilar */
@@ -144,6 +160,17 @@
         .input-field[type="date"] {
             width: 120px;
             box-sizing: border-box;
+        }
+
+        /* Nytt: Styling för timlön per pass */
+        .input-field.hourly-rate-override {
+            width: 80px; /* Mindre bredd för timlön per pass */
+        }
+
+        /* Nytt: Styling för kommentarer */
+        .input-field.comments-field {
+            width: 150px; /* Bredare för kommentarer */
+            text-align: left; /* Texten justeras till vänster */
         }
 
         .checkbox-field {
@@ -305,6 +332,11 @@
                 width: calc(100% - 10px);
                 box-sizing: border-box;
             }
+            .settings-row input[type="month"],
+            .settings-row input[type="date"],
+            .settings-row select {
+                width: calc(100% - 10px); /* Anpassa bredden för mobil */
+            }
 
             table {
                 display: block;
@@ -321,6 +353,12 @@
             }
             .input-field[type="date"] {
                 width: 100px;
+            }
+            .input-field.hourly-rate-override { /* Anpassa även denna för mobil */
+                width: 60px; 
+            }
+            .input-field.comments-field { /* Anpassa även denna för mobil */
+                width: 100px; 
             }
             .delete-row-btn {
                 padding: 3px 6px;
@@ -393,6 +431,26 @@
                 </div>
             </div>
 
+            <div class="settings-section" style="margin-top: 20px;">
+                <h2>Periodvy</h2>
+                <div class="settings-row">
+                    <label for="periodFilter">Välj Period:</label>
+                    <select id="periodFilter" onchange="handlePeriodFilterChange()">
+                        <option value="all">Alla rader</option>
+                        <option value="thisMonth">Denna månad</option>
+                        <option value="lastMonth">Förra månaden</option>
+                        <option value="custom">Anpassad period</option>
+                    </select>
+                </div>
+                <div class="settings-row" id="customPeriodFields" style="display: none; margin-top: 10px;">
+                    <label for="startDate">Från:</label>
+                    <input type="date" id="startDate" onchange="filterTimesheetByPeriod(); saveAllData();">
+                    <label for="endDate">Till:</label>
+                    <input type="date" id="endDate" onchange="filterTimesheetByPeriod(); saveAllData();">
+                    <button class="btn" onclick="clearCustomPeriod();">Rensa period</button>
+                </div>
+            </div>
+
             <table>
                 <thead>
                     <tr>
@@ -401,8 +459,9 @@
                         <th>Starttid</th>
                         <th>Sluttid</th>
                         <th>Rast (min)</th>
+                        <th>Avvikande Timlön</th>
                         <th>Helgdag?</th>
-                        <th>Timmar</th>
+                        <th>Typ av pass/Kommentarer</th> <th>Timmar</th>
                         <th>OB 1 Timmar</th>
                         <th>OB 2 Timmar</th>
                         <th>OB 3 Timmar</th>
@@ -463,6 +522,12 @@
                 const taxRateInput = document.getElementById('taxRate');
                 const timesheetBody = document.getElementById('timesheetBody');
                 const errorMessagesDisplay = document.getElementById('errorMessages');
+                
+                // Nya referenser för periodväljaren
+                const periodFilterSelect = document.getElementById('periodFilter'); 
+                const customPeriodFields = document.getElementById('customPeriodFields');
+                const startDateInput = document.getElementById('startDate');
+                const endDateInput = document.getElementById('endDate');
 
                 // OB-satser definierade som konstanter
                 const OB1_RATE = 0.50; // 50%
@@ -499,7 +564,7 @@
                         showError("Varning: Kunde inte ladda helgdagar automatiskt. Använder en fördefinierad standardlista.");
                     }
                     loadAllData(); // Försök ladda all sparad data
-                    updateSummary(); // Uppdatera summeringen efter laddning
+                    // loadAllData kommer nu anropa handlePeriodFilterChange som i sin tur anropar filterTimesheetByPeriod och updateSummary
                 });
 
                 // Funktion för att spara ALL data till Local Storage
@@ -507,7 +572,10 @@
                     const dataToSave = {
                         settings: {
                             hourlyRate: hourlyRateInput.value,
-                            taxRate: taxRateInput.value
+                            taxRate: taxRateInput.value,
+                            periodFilter: periodFilterSelect.value, // Spara vald period
+                            startDate: startDateInput.value,       // Spara anpassad startdatum
+                            endDate: endDateInput.value            // Spara anpassad slutdatum
                         },
                         rows: []
                     };
@@ -521,7 +589,9 @@
                             startTime: document.getElementById(`start-${rowId}`).value,
                             endTime: document.getElementById(`end-${rowId}`).value,
                             restMinutes: document.getElementById(`rest-${rowId}`).value,
-                            isHoliday: document.getElementById(`holiday-${rowId}`).checked
+                            hourlyRateOverride: document.getElementById(`hourlyRateOverride-${rowId}`).value,
+                            isHoliday: document.getElementById(`holiday-${rowId}`).checked,
+                            comments: document.getElementById(`comments-${rowId}`).value // Ny: Spara kommentarer
                         });
                     });
                     localStorage.setItem('timesheetData', JSON.stringify(dataToSave));
@@ -537,14 +607,15 @@
                         if (data.settings) {
                             hourlyRateInput.value = data.settings.hourlyRate || "162.98";
                             taxRateInput.value = data.settings.taxRate || "30";
+                            periodFilterSelect.value = data.settings.periodFilter || 'all'; // Ladda vald period
+                            startDateInput.value = data.settings.startDate || '';           // Ladda anpassad startdatum
+                            endDateInput.value = data.settings.endDate || '';               // Ladda anpassad slutdatum
                         }
 
-                        // Rensa befintliga rader innan laddning
                         timesheetBody.innerHTML = '';
-                        dailyData = {}; // Rensa det interna dataobjektet
-                        dayCounter = 0; // Återställ räknaren
+                        dailyData = {};
+                        dayCounter = 0;
 
-                        // Lägg till rader baserat på sparad data
                         if (data.rows && data.rows.length > 0) {
                             data.rows.forEach(rowData => {
                                 addDay({
@@ -552,15 +623,20 @@
                                     startTime: rowData.startTime,
                                     endTime: rowData.endTime,
                                     restMinutes: parseInt(rowData.restMinutes) || 0,
-                                    isHoliday: rowData.isHoliday
+                                    hourlyRateOverride: rowData.hourlyRateOverride || '',
+                                    isHoliday: rowData.isHoliday,
+                                    comments: rowData.comments || '' // Ny: Ladda kommentarer
                                 });
                             });
                         } else {
-                            addDay(); // Lägg till en tom rad om ingen sparad data finns
+                            addDay();
                         }
                     } else {
-                        addDay(); // Lägg till en tom rad om ingen data alls finns i Local Storage
+                        addDay();
                     }
+                    // Efter laddning av all data och inställningar, anropa handlePeriodFilterChange
+                    // Denna kommer att visa/dölja fält för anpassad period och sedan filtrera samt uppdatera summering.
+                    handlePeriodFilterChange(); 
                 }
 
                 // Hjälpfunktion för att visa felmeddelanden vid fälten
@@ -594,7 +670,27 @@
                     dayCounter++;
                     const rowId = `row-${dayCounter}`;
                     const now = new Date();
-                    const dateId = initialData.date || now.toISOString().slice(0, 10);
+                    let dateId = initialData.date; // Använd initialData om det finns
+
+                    // Om ingen initialData.date är given, bestäm datum baserat på filter
+                    if (!dateId) {
+                        const selectedPeriod = periodFilterSelect.value;
+                        if (selectedPeriod === 'thisMonth') {
+                            const today = new Date();
+                            // Sätt datumet till första dagen i aktuell månad
+                            dateId = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+                        } else if (selectedPeriod === 'lastMonth') {
+                            const today = new Date();
+                            // Sätt datumet till första dagen i förra månaden
+                            dateId = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().slice(0, 10);
+                        } else if (selectedPeriod === 'custom' && startDateInput.value) {
+                            // Om anpassad period är vald och ett startdatum finns, använd det som standard
+                            dateId = startDateInput.value; 
+                        } else {
+                            // Standard: dagens datum
+                            dateId = now.toISOString().slice(0, 10); 
+                        }
+                    }
 
                     const defaultStartTime = "09:00";
                     const defaultEndTime = "17:00";
@@ -608,8 +704,9 @@
                         <td><input type="time" class="input-field" id="start-${rowId}" value="${initialData.startTime || defaultStartTime}" onchange="calculateRow('${rowId}')"></td>
                         <td><input type="time" class="input-field" id="end-${rowId}" value="${initialData.endTime || defaultEndTime}" onchange="calculateRow('${rowId}')"></td>
                         <td><input type="number" class="input-field" id="rest-${rowId}" value="${initialData.restMinutes || 0}" min="0" onchange="calculateRow('${rowId}')"></td>
+                        <td><input type="number" class="input-field hourly-rate-override" id="hourlyRateOverride-${rowId}" value="${initialData.hourlyRateOverride || ''}" placeholder="Ordinarie" onchange="calculateRow('${rowId}')" min="0"></td>
                         <td><input type="checkbox" class="checkbox-field" id="holiday-${rowId}" ${initialData.isHoliday ? 'checked' : ''} onchange="calculateRow('${rowId}')"></td>
-                        <td id="hours-${rowId}">0.00</td>
+                        <td><input type="text" class="input-field comments-field" id="comments-${rowId}" value="${initialData.comments || ''}" onchange="saveAllData()"></td> <td id="hours-${rowId}">0.00</td>
                         <td id="ob1-${rowId}">0.00</td>
                         <td id="ob2-${rowId}">0.00</td>
                         <td id="ob3-${rowId}">0.00</td>
@@ -620,7 +717,7 @@
                     `;
                     
                     document.getElementById(`rest-${rowId}`).setAttribute('min', '0');
-
+                    document.getElementById(`hourlyRateOverride-${rowId}`).setAttribute('min', '0'); // Säkerställ att avvikande timlön inte kan vara negativ
 
                     dailyData[rowId] = {
                         date: dateId,
@@ -628,6 +725,7 @@
                     };
 
                     updateRowDate(rowId);
+                    filterTimesheetByPeriod(); // Applicera filtret direkt på den nya raden
                 }
 
                 function deleteRow(rowId) {
@@ -680,7 +778,9 @@
                              document.getElementById(`holiday-${rowId}`).checked = true;
                         }
                     } else { 
-                        if (document.getElementById(`holiday-${rowId}`).checked) {
+                        // Om det är en vanlig vardag och holiday-rutan är ikryssad, avmarkera den
+                        // (om den inte är en speciell lördag som räknas som helgdag)
+                        if (document.getElementById(`holiday-${rowId}`).checked && !isSaturdayObDay) {
                             document.getElementById(`holiday-${rowId}`).checked = false;
                         }
                     }
@@ -705,6 +805,7 @@
                     const startInput = document.getElementById(`start-${rowId}`);
                     const endInput = document.getElementById(`end-${rowId}`);
                     const restInput = document.getElementById(`rest-${rowId}`);
+                    const hourlyRateOverrideInput = document.getElementById(`hourlyRateOverride-${rowId}`);
                     const holidayCheckbox = document.getElementById(`holiday-${rowId}`);
 
                     const dateVal = dateInput.value;
@@ -716,9 +817,13 @@
                     let endTime = parseTimeToMinutes(endInput.value);
                     let restMinutes = parseInt(restInput.value) || 0;
                     
+                    let overrideRate = parseFloat(hourlyRateOverrideInput.value);
+                    const currentHourlyRate = (!isNaN(overrideRate) && overrideRate >= 0) ? overrideRate : parseFloat(hourlyRateInput.value) || 0;
+
                     showFieldFeedback(startInput, true);
                     showFieldFeedback(endInput, true);
                     showFieldFeedback(restInput, true);
+                    showFieldFeedback(hourlyRateOverrideInput, true);
 
                     let isValid = true;
                     
@@ -732,6 +837,10 @@
                     }
                     if (restMinutes < 0) {
                         showFieldFeedback(restInput, false, "Rast kan inte vara negativ.");
+                        isValid = false;
+                    }
+                    if (!isNaN(overrideRate) && overrideRate < 0) {
+                        showFieldFeedback(hourlyRateOverrideInput, false, "Avvikande timlön kan inte vara negativ.");
                         isValid = false;
                     }
 
@@ -775,9 +884,7 @@
                         return;
                     }
 
-                    let minutesToDistribute = totalMinutesGross; // Totala minuter att fördela, inklusive rast
-                    let totalMinutesNet = totalMinutesGross - restMinutes; // Nettoarbetstid efter rast
-                    
+                    let minutesRemainingForCalculation = totalMinutesGross; 
                     let hoursWorked = 0;
                     let ob1Hours = 0;
                     let ob2Hours = 0;
@@ -786,69 +893,78 @@
                     const currentOb1Rate = OB1_RATE;
                     const currentOb2Rate = OB2_RATE;
                     const currentOb3Rate = OB3_RATE;
-                    const hourlyRate = parseFloat(hourlyRateInput.value) || 0;
-
+                    
                     const time12_00 = parseTimeToMinutes("12:00");
                     const time18_15 = parseTimeToMinutes("18:15");
                     const time20_00 = parseTimeToMinutes("20:00");
 
-                    // Loopa igenom varje minut av arbetspasset, för att korrekt dra av rast och räkna OB
+                    const minuteTypes = new Array(totalMinutesGross).fill(0); 
+
                     for (let m = 0; m < totalMinutesGross; m++) {
                         const currentMinuteAbsolute = startTime + m;
                         let minuteDate = new Date(date);
+                        let minuteDayOffset = 0; 
+
                         if (currentMinuteAbsolute >= 24 * 60) {
-                            minuteDate.setDate(date.getDate() + 1);
+                            minuteDayOffset = Math.floor(currentMinuteAbsolute / (24 * 60));
+                            minuteDate.setDate(date.getDate() + minuteDayOffset);
                         }
                         const minuteDayOfWeek = minuteDate.getDay();
                         const minuteDateId = minuteDate.toISOString().slice(0, 10);
                         
                         const currentMinuteOfDay = currentMinuteAbsolute % (24 * 60);
 
-                        // Kontrollera om denna minut ska räknas som faktiskt arbetad tid (efter rastavdrag)
-                        let isWorkingMinute = true;
-                        if (restMinutes > 0) {
-                            // För vardagar (Mån-Fre) där rasten ska dras FÖRE 18:15
-                            if (minuteDayOfWeek >= 1 && minuteDayOfWeek <= 5) { // Vardag
-                                if (currentMinuteOfDay >= time18_15) {
-                                    // Denna minut är OB-tid (eller senare). Rasten ska ha dragits innan.
-                                    // Vi låter denna minut räknas som arbetstid, eftersom rasten redan "antas" vara dragen tidigare.
-                                } else {
-                                    // Om vi är före 18:15 och fortfarande har rast att dra av
-                                    isWorkingMinute = false; // Denna minut räknas som rast
-                                    restMinutes--; // Dra av en minut rast
-                                }
-                            } else { // Helgdag, Lördag, Söndag (rasten kan dras när som helst, påverkar inte OB)
-                                isWorkingMinute = false; // Denna minut räknas som rast
-                                restMinutes--; // Dra av en minut rast
+                        let type = 0; 
+
+                        const isActualHoliday = holidays.includes(minuteDateId);
+                        const isSaturdayObDay = saturdayOBDays.includes(minuteDateId);
+
+                        if (holidayCheckbox.checked || minuteDayOfWeek === 0 || isActualHoliday || (minuteDayOfWeek === 6 && currentMinuteOfDay >= time12_00) || isSaturdayObDay) {
+                            type = 3; 
+                        } else if (minuteDayOfWeek >= 1 && minuteDayOfWeek <= 5) { 
+                            if (currentMinuteOfDay >= time20_00) {
+                                type = 2; 
+                            } else if (currentMinuteOfDay >= time18_15) {
+                                type = 1; 
                             }
                         }
+                        minuteTypes[m] = type;
+                    }
 
-                        if (isWorkingMinute) {
-                            hoursWorked += (1 / 60); // Räkna som arbetad tid
-                            // Bestäm OB-typ för denna arbetade minut
-                            if (holidayCheckbox.checked) {
-                                ob3Hours += (1 / 60);
-                            } 
-                            else if (minuteDayOfWeek === 0) { // Söndag
-                                ob3Hours += (1 / 60);
-                            } else if (minuteDayOfWeek === 6) { // Lördag
-                                if (currentMinuteOfDay >= time12_00) {
-                                    ob3Hours += (1 / 60);
-                                }
-                            } else if (minuteDayOfWeek >= 1 && minuteDayOfWeek <= 5) { // Vardagar
-                                if (currentMinuteOfDay >= time18_15 && currentMinuteOfDay < time20_00) {
-                                    ob1Hours += (1 / 60);
-                                } else if (currentMinuteOfDay >= time20_00) {
-                                    ob2Hours += (1 / 60);
-                                }
+                    let deductedRest = 0;
+                    for (let m = 0; m < totalMinutesGross && deductedRest < restMinutes; m++) {
+                        if (minuteTypes[m] === 0) {
+                            minuteTypes[m] = -1; 
+                            deductedRest++;
+                        }
+                    }
+
+                    for (let type = 1; type <= 3 && deductedRest < restMinutes; type++) {
+                        for (let m = 0; m < totalMinutesGross && deductedRest < restMinutes; m++) {
+                            if (minuteTypes[m] === type) {
+                                minuteTypes[m] = -1; 
+                                deductedRest++;
                             }
                         }
                     }
 
-                    const grundlon = hoursWorked * hourlyRate;
-                    const obTullagg = (ob1Hours * hourlyRate * currentOb1Rate) +
-                                      (ob2Hours * hourlyRate * currentOb2Rate) +
-                                      (ob3Hours * hourlyRate * currentOb3Rate);
+                    for (let m = 0; m < totalMinutesGross; m++) {
+                        if (minuteTypes[m] !== -1) { 
+                            hoursWorked += (1 / 60);
+                            if (minuteTypes[m] === 1) {
+                                ob1Hours += (1 / 60);
+                            } else if (minuteTypes[m] === 2) {
+                                ob2Hours += (1 / 60);
+                            } else if (minuteTypes[m] === 3) {
+                                ob3Hours += (1 / 60);
+                            }
+                        }
+                    }
+
+                    const grundlon = hoursWorked * currentHourlyRate; 
+                    const obTullagg = (ob1Hours * currentHourlyRate * currentOb1Rate) +
+                                      (ob2Hours * currentHourlyRate * currentOb2Rate) +
+                                      (ob3Hours * currentHourlyRate * currentOb3Rate);
                     const totalDayPay = grundlon + obTullagg;
 
                     document.getElementById(`hours-${rowId}`).innerText = hoursWorked.toFixed(2);
@@ -890,23 +1006,101 @@
                     updateSummary();
                 }
 
+                // Funktion för att hantera ändring i dropdown-menyn
+                function handlePeriodFilterChange() {
+                    const selectedValue = periodFilterSelect.value;
+                    const today = new Date();
+                    let start = '';
+                    let end = '';
+
+                    customPeriodFields.style.display = 'none'; // Dölj anpassade fält som standard
+
+                    switch (selectedValue) {
+                        case 'all':
+                            break;
+                        case 'thisMonth':
+                            start = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+                            end = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().slice(0, 10);
+                            break;
+                        case 'lastMonth':
+                            start = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().slice(0, 10);
+                            end = new Date(today.getFullYear(), today.getMonth(), 0).toISOString().slice(0, 10);
+                            break;
+                        case 'custom':
+                            customPeriodFields.style.display = 'flex'; 
+                            start = startDateInput.value;
+                            end = endDateInput.value;
+                            break;
+                    }
+                    
+                    startDateInput.value = start;
+                    endDateInput.value = end;
+                    filterTimesheetByPeriod(); 
+                    saveAllData(); 
+                }
+
+                // Ny funktion för att rensa anpassade periodfält
+                function clearCustomPeriod() {
+                    startDateInput.value = '';
+                    endDateInput.value = '';
+                    filterTimesheetByPeriod();
+                    saveAllData();
+                }
+
+                // Huvudfunktion för att filtrera tidrapporten baserat på vald period
+                function filterTimesheetByPeriod() {
+                    const selectedValue = periodFilterSelect.value;
+                    const filterStartDate = startDateInput.value ? new Date(startDateInput.value + 'T00:00:00') : null;
+                    const filterEndDate = endDateInput.value ? new Date(endDateInput.value + 'T23:59:59') : null;
+
+                    const rows = timesheetBody.querySelectorAll('tr');
+                    rows.forEach(row => {
+                        const dateInput = document.getElementById(`date-${row.id}`);
+                        const rowDate = dateInput ? new Date(dateInput.value + 'T12:00:00') : null;
+
+                        let shouldDisplay = true;
+
+                        if (selectedValue !== 'all' && rowDate) {
+                            if (filterStartDate && rowDate < filterStartDate) {
+                                shouldDisplay = false;
+                            }
+                            if (filterEndDate && rowDate > filterEndDate) {
+                                shouldDisplay = false;
+                            }
+                        } else if (selectedValue !== 'all' && !rowDate) {
+                            shouldDisplay = false;
+                        }
+
+                        if (shouldDisplay) {
+                            row.style.display = ''; 
+                        } else {
+                            row.style.display = 'none'; 
+                        }
+                    });
+                    updateSummary(); 
+                }
+                
                 function updateSummary() {
                     let totalHours = 0;
                     let totalOb1Hours = 0;
                     let totalOb2Hours = 0;
                     let totalOb3Hours = 0;
                     let grossPay = 0;
-                    const hourlyRate = parseFloat(hourlyRateInput.value) || 0;
                     const taxRate = parseFloat(taxRateInput.value) || 0;
 
-                    for (const rowId in dailyData) {
+                    const visibleRows = timesheetBody.querySelectorAll('tr:not([style*="display: none"])');
+
+                    visibleRows.forEach(row => {
+                        const rowId = row.id;
                         const data = dailyData[rowId];
-                        totalHours += data.hours;
-                        totalOb1Hours += data.ob1;
-                        totalOb2Hours += data.ob2;
-                        totalOb3Hours += data.ob3;
-                        grossPay += data.totalDayPay;
-                    }
+                        if (data) {
+                            totalHours += data.hours;
+                            totalOb1Hours += data.ob1;
+                            totalOb2Hours += data.ob2;
+                            totalOb3Hours += data.ob3;
+                            grossPay += data.totalDayPay;
+                        }
+                    });
 
                     const taxDeduction = grossPay * (taxRate / 100);
                     const netPay = grossPay - taxDeduction;
@@ -925,16 +1119,24 @@
                     timesheetBody.innerHTML = '';
                     dailyData = {};
                     dayCounter = 0;
+                    
+                    periodFilterSelect.value = 'all'; 
+                    startDateInput.value = '';
+                    endDateInput.value = '';
+                    customPeriodFields.style.display = 'none';
+                    
                     updateSummary();
                     clearError();
-                    localStorage.removeItem('timesheetData'); // Rensa Local Storage
-                    addDay(); // Lägg till en ny tom rad
+                    localStorage.removeItem('timesheetData');
+                    addDay(); 
+                    filterTimesheetByPeriod(); 
                 }
 
                 function exportData() {
-                    let csvContent = "Datum;Dag;Starttid;Sluttid;Rast (min);Helgdag?;Timmar;OB 1 Timmar;OB 2 Timmar;OB 3 Timmar;Grundlön;OB-tillägg;Totalt (exkl. skatt)\n";
+                    // Uppdaterad rubrik för CSV-filen för att inkludera den nya kolumnen
+                    let csvContent = "Datum;Dag;Starttid;Sluttid;Rast (min);Avvikande Timlön;Helgdag?;Typ av pass/Kommentarer;Timmar;OB 1 Timmar;OB 2 Timmar;OB 3 Timmar;Grundlön;OB-tillägg;Totalt (exkl. skatt)\n";
 
-                    const rows = timesheetBody.querySelectorAll('tr');
+                    const rows = timesheetBody.querySelectorAll('tr'); 
                     rows.forEach(row => {
                         const rowId = row.id;
                         const dateInput = document.getElementById(`date-${rowId}`);
@@ -942,13 +1144,17 @@
                         const startInput = document.getElementById(`start-${rowId}`);
                         const endInput = document.getElementById(`end-${rowId}`);
                         const restInput = document.getElementById(`rest-${rowId}`);
+                        const hourlyRateOverrideInput = document.getElementById(`hourlyRateOverride-${rowId}`);
                         const holidayCheckbox = document.getElementById(`holiday-${rowId}`);
+                        const commentsInput = document.getElementById(`comments-${rowId}`); // Ny: Kommentarsfält
 
                         const date = dateInput ? dateInput.value : '';
                         const startTime = startInput ? startInput.value : '';
                         const endTime = endInput ? endInput.value : '';
                         const restMinutes = restInput ? restInput.value : '0';
+                        const hourlyRateOverride = hourlyRateOverrideInput ? hourlyRateOverrideInput.value : '';
                         const isHoliday = holidayCheckbox ? (holidayCheckbox.checked ? 'Ja' : 'Nej') : 'Nej';
+                        const comments = commentsInput ? commentsInput.value : ''; // Hämta värdet
 
                         const hours = document.getElementById(`hours-${rowId}`).innerText;
                         const ob1 = document.getElementById(`ob1-${rowId}`).innerText;
@@ -958,7 +1164,8 @@
                         const obTullagg = document.getElementById(`obTullagg-${rowId}`).innerText;
                         const totalDayPay = document.getElementById(`totalDayPay-${rowId}`).innerText;
 
-                        csvContent += `"${date}";"${dayOfWeek}";"${startTime}";"${endTime}";"${restMinutes}";"${isHoliday}";"${hours}";"${ob1}";"${ob2}";"${ob3}";"${grundlon}";"${obTullagg}";"${totalDayPay}"\n`;
+                        // Uppdaterad ordning för att matcha den nya rubriken
+                        csvContent += `"${date}";"${dayOfWeek}";"${startTime}";"${endTime}";"${restMinutes}";"${hourlyRateOverride}";"${isHoliday}";"${comments}";"${hours}";"${ob1}";"${ob2}";"${ob3}";"${grundlon}";"${obTullagg}";"${totalDayPay}"\n`;
                     });
 
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -987,38 +1194,37 @@
                         }
 
                         const header = lines[0].split(';').map(h => h.trim().replace(/"/g, ''));
-                        const expectedHeaders = ["Datum", "Dag", "Starttid", "Sluttid", "Rast (min)", "Helgdag?", "Timmar", "OB 1 Timmar", "OB 2 Timmar", "OB 3 Timmar", "Grundlön", "OB-tillägg", "Totalt (exkl. skatt)"];
+                        // Uppdaterad förväntad header
+                        const expectedHeaders = ["Datum", "Dag", "Starttid", "Sluttid", "Rast (min)", "Avvikande Timlön", "Helgdag?", "Typ av pass/Kommentarer", "Timmar", "OB 1 Timmar", "OB 2 Timmar", "OB 3 Timmar", "Grundlön", "OB-tillägg", "Totalt (exkl. skatt)"];
 
                         if (header.length !== expectedHeaders.length || !expectedHeaders.every((val, index) => val === header[index])) {
                             alert("CSV-filen har felaktigt format på rubrikerna. Kontrollera att filen är en oförändrad export från denna tidrapport. Förväntade rubriker: " + expectedHeaders.join("; "));
                             return;
                         }
 
-                        clearAll(); // Rensa befintlig data och Local Storage
+                        clearAll(); 
 
                         for (let i = 1; i < lines.length; i++) {
                             const values = lines[i].split(';').map(v => v.trim().replace(/"/g, ''));
 
-                            if (values.length >= 6) {
+                            if (values.length >= expectedHeaders.length) { 
                                 const initialData = {
                                     date: values[0],
-                                    dayOfWeek: values[1], // Denna används inte i addDay men skickas med
+                                    dayOfWeek: values[1], 
                                     startTime: values[2],
                                     endTime: values[3],
                                     restMinutes: parseInt(values[4]) || 0,
-                                    isHoliday: values[5].toLowerCase() === 'ja'
+                                    hourlyRateOverride: values[5] || '',
+                                    isHoliday: values[6].toLowerCase() === 'ja',
+                                    comments: values[7] || '' // Ny: Hämta kommentarer från rätt index
                                 };
                                 addDay(initialData);
-                                const currentAddedRowId = `row-${dayCounter}`;
-                                await new Promise(resolve => setTimeout(resolve, 5)); 
-                                updateRowDate(currentAddedRowId);
-                                calculateRow(currentAddedRowId); // Beräknar och sparar automatiskt
                             } else {
                                 console.warn(`Skipping malformed row ${i+1}: ${lines[i]}`);
                                 showError(`Varning: Rad ${i+1} i CSV-filen ignorerades på grund av felaktigt format.`);
                             }
                         }
-                        updateSummary(); // Uppdatera summeringen en sista gång
+                        filterTimesheetByPeriod(); 
                         alert("Data importerades framgångsrikt!");
                         document.getElementById('importFile').value = '';
                         clearError(); 
