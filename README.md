@@ -1,58 +1,61 @@
-# Tidrapportskalkylator Handel Sverige
+# Tidrapportskalkylator för Handel Sverige
+
+Detta är en enkel och användarvänlig webbaserad tidrapportskalkylator designad specifikt för dig som arbetar inom **Handelsanställdas förbunds avtalsområde i Sverige**. Verktyget hjälper dig att snabbt och enkelt beräkna din lön, inklusive OB-tillägg, baserat på dina arbetstider.
 
 ---
 
-Detta är en enkel webbaserad tidrapportskalkylator designad för att hjälpa anställda inom Handelsområdet i Sverige att beräkna sin lön, inklusive OB-tillägg och skatteavdrag. Kalkylatorn tar hänsyn till specifika regler för OB-ersättning som är vanliga inom handel.
-
 ## Funktioner
 
-* **Enkel inmatning:** Lägg enkelt till rader för varje arbetsdag med datum, start- och sluttid, samt rast.
-* **Automatisk OB-beräkning:** Beräknar OB-tillägg automatiskt baserat på angivna tider och veckodagar/helgdagar.
-    * **Vardagar:** 50% efter kl. 18:15, 70% efter kl. 20:00.
-    * **Lördagar:** 100% efter kl. 12:00.
-    * **Söndagar och Helgdagar:** 100% hela dagen.
-    * **Viktigt:** Raster dras i första hand **före** klockan 18:15 på vardagar, för att säkerställa korrekt OB-beräkning.
-* **Helgdagshantering:** Identifierar automatiskt helgdagar (via `holidays.json`) och dagar som räknas som lördag (Påskafton, Midsommarafton, Julafton, Nyårsafton) för korrekt OB-beräkning. Möjlighet att manuellt markera en dag som helgdag.
-* **Lönesummering:** Ger en tydlig sammanfattning av totala arbetstimmar, totala OB-timmar, bruttolön, skatteavdrag och utbetald nettolön.
-* **Anpassningsbara inställningar:** Justera enkelt timlön och skattesats.
-* **Lagra data lokalt:** Dina inmatade tider och inställningar sparas automatiskt i din webbläsares lokala lagring.
-* **Import/Export:** Möjlighet att exportera tidrapporten till en CSV-fil samt importera tidigare sparad data.
-* **Responsiv design:** Fungerar bra på både datorer och mobila enheter.
+* **Löneberäkning:** Beräknar grundlön och OB-tillägg baserat på angiven timlön och arbetade timmar.
+* **OB-ersättning:** Fullt stöd för Handelsanställdas förbunds OB-regler:
+    * **50%:** Vardagar 18:15–20:00
+    * **70%:** Vardagar efter 20:00
+    * **100%:** Lördagar efter 12:00, söndagar och helgdagar (hela dagen).
+* **Helgdagshantering:** Automatisk identifiering av helgdagar samt specialdagar som räknas som lördag (Påskafton, Midsommarafton, Julafton, Nyårsafton).
+* **Anpassningsbar timlön:** Möjlighet att ange en generell ordinarie timlön samt **avvikande timlön per arbetspass** för flexibilitet.
+* **Rastavdrag:** Hanterar avdrag för rast på ett korrekt sätt, med prioritet på avdrag från ordinarie arbetstid.
+* **Skatteberäkning:** Beräknar beräknat skatteavdrag baserat på en anpassningsbar procentsats för att ge en uppskattning av nettolönen.
+* **Periodfiltrering:** Visa och summera arbetstid för specifika perioder som "Denna månad", "Förra månaden" eller en anpassad datumintervall.
+* **Kommentarsfält:** Lägg till **"Typ av arbetspass/Kommentarer"** per rad för att dokumentera mer detaljerat, t.ex. "Ordinarie", "Övertid", "Sjukfrånvaro", "Semester", "Möte".
+* **Datahantering:**
+    * **Automatisk sparning:** Din data sparas automatiskt lokalt i din webbläsare så att du inte förlorar den.
+    * **Exportera till CSV:** Exportera all din tidrapportsdata till en CSV-fil för enkel delning eller arkivering.
+    * **Importera från CSV:** Importera tidigare exporterade tidrapporter från en CSV-fil.
 
-## Hur man använder den
+---
 
-1.  **Öppna kalkylatorn:** Klona repot och öppna `index.html` i din webbläsare, eller använd den live-versionen om det finns en.
-2.  **Ange inställningar:** Fyll i din ordinarie timlön och din skattesats i procent i fälten under "Generella Inställningar".
-3.  **Lägg till dagar:** Kalkylatorn startar med en tom rad. Använd knappen "Lägg till dag" för att lägga till fler rader för dina arbetspass.
-4.  **Fyll i arbetspass:** För varje rad:
-    * Välj **Datum**.
-    * Ange **Starttid** och **Sluttid** (HH:MM-format).
-    * Ange **Rast (min)** i minuter. Observera att rast på vardagar alltid antas tas före kl 18:15.
-    * Markera "Helgdag?" om dagen är en särskild helgdag, eller om du vill tvinga 100% OB för hela passet (kalkylatorn markerar automatiskt söndagar och vissa andra helgdagar).
-5.  **Se resultat:** Kalkylatorn uppdaterar automatiskt beräkningarna för varje rad och summerar totalerna längst ner.
-6.  **Spara/Ladda:**
-    * Dina data sparas **automatiskt** i din webbläsare.
-    * Använd "Exportera data" för att spara en CSV-fil med din tidrapport.
-    * Använd "Importera data" för att ladda en tidigare exporterad CSV-fil.
-    * Använd "Rensa allt" för att nollställa kalkylatorn och ta bort all sparad data.
+## Så här använder du den
 
-## Installation (för utvecklare/lokal körning)
+1.  **Öppna `calculator.html`:** Kalkylatorn är en fristående HTML-fil. Öppna den direkt i din webbläsare.
+2.  **Ange inställningar:** Fyll i din **ordinarie timlön** och **skatteavdrag i procent** i inställningssektionen.
+3.  **Fyll i arbetspass:**
+    * Ange **datum, starttid, sluttid** och **rast (minuter)** för varje arbetspass.
+    * Använd fältet **"Avvikande Timlön"** om du har en annan timlön för det specifika passet.
+    * Markera rutan **"Helgdag?"** om passet infaller på en röd dag eller en speciallördag.
+    * Använd det nya fältet **"Typ av pass/Kommentarer"** för att lägga till relevant information.
+    * Kalkylatorn uppdaterar automatiskt beräkningarna när du ändrar värdena.
+4.  **Periodvy:** Använd rullgardinsmenyn "Välj Period" för att filtrera din tidrapport. Du kan välja "Denna månad", "Förra månaden" eller en anpassad tidsperiod.
+5.  **Summering:** Se en sammanställning av dina totala arbetstimmar, OB-timmar, bruttolön, skatteavdrag och nettolön längst ner på sidan.
+6.  **Hantera rader:**
+    * Klicka på **"Lägg till dag"** för att lägga till en ny rad i tidrapporten.
+    * Klicka på **"X"** bredvid en rad för att ta bort den.
+7.  **Spara/Ladda:** Använd knapparna **"Exportera data"** och **"Importera data"** för att hantera dina tidrapporter.
 
-1.  **Klona repot:**
-    ```bash
-    git clone [https://github.com/ditt-användarnamn/tidrapportskalkylator.git](https://github.com/ditt-användarnamn/tidrapportskalkylator.git)
-    ```
-2.  **Navigera till projektkatalogen:**
-    ```bash
-    cd tidrapportskalkylator
-    ```
-3.  **Öppna i webbläsaren:**
-    Öppna filen `index.html` direkt i din webbläsare. Du behöver ingen webbserver för att köra denna kalkylator lokalt.
+---
 
-## Bidrag
+## För vem är detta?
 
-Välkomna bidrag! Om du har förslag på förbättringar, buggfixar eller nya funktioner, vänligen skapa ett "issue" eller skicka in en "pull request".
+Denna kalkylator är primärt utvecklad för anställda inom handeln i Sverige som följer Handelsanställdas förbunds kollektivavtal. Den är ett enkelt verktyg för att få en snabb överblick över sin lön och sina arbetstimmar.
 
-## Licens
+---
 
-Detta projekt är licensierat under MIT-licensen. Se filen `LICENSE` för mer information.
+## Bidrag och support
+
+Om du har frågor, hittar fel eller har förslag på förbättringar, vänligen kontakta utvecklaren via [TJELITE1986](https://github.com/tjelite1986) på GitHub.
+
+---
+
+**&copy; 2025 Handel Sverige. Alla rättigheter reserverade.**
+Byggd med ❤️ av [TJELITE1986](https://github.com/tjelite1986)
+
+---
