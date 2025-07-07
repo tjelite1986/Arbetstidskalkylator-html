@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Så här beräknas din tidrapport - Tidrapport med Löneberäkning</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+        h2 {
+            color: #3498db;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.6em;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #2c3e50;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        ul {
+            margin-bottom: 15px;
+            padding-left: 25px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        strong {
+            color: #2c3e50;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 30px;
+        }
+        .back-link a {
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 1em;
+            transition: background 0.3s ease;
+        }
+        .back-link a:hover {
+            background: #2980b9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            color: #555;
+        }
+        .note {
+            background-color: #ecf0f1;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            font-style: italic;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Så här beräknas din tidrapport och lön</h1>
+        <p>Denna sida förklarar i detalj hur tidrapporten beräknar din arbetstid, OB-tillägg och slutliga lön. Syftet är att ge dig full insyn i logiken bakom siffrorna.</p>
+
+        <div class="note">
+            <strong>Viktigt att notera:</strong> Denna kalkylator är ett hjälpmedel och bör inte ses som en officiell lönebesked. För exakta siffror och skatteavdrag hänvisas du alltid till ditt lönekontor eller Skatteverket. OB-tilläggen är baserade på vanliga avtal men kan variera.
+        </div>
+
+        <h2>Grundläggande beräkningar per dag</h2>
+        <p>För varje arbetad dag utförs följande beräkningar:</p>
+        <ul>
+            <li><strong>Arbetstid:</strong> Mellan Starttid och Sluttid dras den angivna rasten bort. Om du använder "Rast Start" och "Rast Slut" beräknas rasten automatiskt baserat på tidsintervallet mellan dessa. Om "Rast (min)" fylls i, används det värdet istället. Övernattningspass hanteras korrekt.</li>
+            <li><strong>Grundlön:</strong> Beräknas som <code>Arbetstimmar * Grundlön (per timme)</code>.</li>
+            <li><strong>OB-tillägg:</strong> Detta är den mest komplexa delen och förklaras mer detaljerat nedan. OB-tillägg beräknas baserat på de arbetade timmarna som faller inom specifika OB-perioder.</li>
+            <li><strong>Bruttolön:</strong> Summeringen av <code>Grundlön + OB-tillägg</code> för den aktuella dagen.</li>
+            <li><strong>Skatt:</strong> Beräknas som <code>Bruttolön * Skattesats (%)</code>.</li>
+            <li><strong>Nettolön:</strong> <code>Bruttolön - Skatt</code>.</li>
+        </ul>
+
+        <h2>Hur OB-tilläggen beräknas</h2>
+        <p>OB (Obekväm Arbetstid) är tillägg som betalas ut för arbete under specifika tider på dygnet eller veckans dagar. Procentsatserna är justerbara via kugghjulsikonen (⚙️) i inställningsrutan.</p>
+
+        <h3>Vardagar (Måndag - Fredag)</h3>
+        <ul>
+            <li><strong>Vardag kväll (från 18:15):</strong> Du får ett tillägg för arbetade timmar mellan kl. 18:15 och 19:59. Standardtillägget är <strong>50%</strong> av din grundlön per timme.</li>
+            <li><strong>Vardag sen kväll (efter 20:00):</strong> För arbete från kl. 20:00 fram till midnatt (eller slutet av passet om det sträcker sig över midnatt) får du ett högre tillägg. Standardtillägget är <strong>70%</strong> av din grundlön per timme.</li>
+        </ul>
+
+        <h3>Helgdagar och helger</h3>
+        <ul>
+            <li><strong>Lördag (från 12:00):</strong> För arbetade timmar från kl. 12:00 på lördagar får du ett tillägg. Standardtillägget är <strong>100%</strong> av din grundlön per timme.</li>
+            <li><strong>Söndag (hela dagen):</strong> Allt arbete på söndagar ger ett tillägg. Standardtillägget är <strong>100%</strong> av din grundlön per timme.</li>
+            <li><strong>Helgdagar:</strong> Om en dag markeras som "Röd dag" (antingen automatiskt om det är en känd helgdag eller söndag, eller manuellt av dig), kommer <strong>alla</strong> arbetade timmar den dagen att ge ett tillägg. Standardtillägget är <strong>100%</strong> av din grundlön per timme. Observera att en röd dag "trumfar" andra OB-regler; om en dag är röd dag får du enbart helgtillägget för de timmarna.</li>
+        </ul>
+
+        <p><strong>Exempel på OB-beräkning:</strong></p>
+        <p>Om du jobbar 18:00 - 21:00 på en måndag och din grundlön är 160 kr/timme:</p>
+        <ul>
+            <li>18:00 - 18:14: Ingen OB.</li>
+            <li>18:15 - 19:59 (1 timme 45 min = 1.75 timmar): 1.75 timmar * 160 kr/tim * 50% = 140 kr i OB.</li>
+            <li>20:00 - 21:00 (1 timme): 1 timme * 160 kr/tim * 70% = 112 kr i OB.</li>
+            <li>Totalt OB för passet: 140 kr + 112 kr = 252 kr.</li>
+        </ul>
+
+        <h2>Månadssummering</h2>
+        <p>Summeringsrutan längst ner visar aggregerade värden för de dagar som för närvarande visas i tabellen (beroende på vilken filterperiod du har valt, t.ex. "Denna månaden" eller "Alla rader").</p>
+        <ul>
+            <li>**Totala arbetstimmar:** Summan av arbetade timmar från alla synliga dagar.</li>
+            <li>**Grundlön (exkl. OB):** Summan av grundlön från alla synliga dagar.</li>
+            <li>**OB-tillägg (alla kategorier):** Summering av respektive OB-kategori för alla synliga dagar.</li>
+            <li>**BRUTTOLÖN:** Den totala inkomsten före skatt, det vill säga summan av grundlön och alla OB-tillägg.</li>
+            <li>**Skatt:** Den totala skatten baserad på den totala bruttolönen och din angivna skattesats.</li>
+            <li>**NETTOLÖN (efter skatt):** Din bruttolön minus den beräknade skatten, vilket är det belopp du har kvar efter skatt.</li>
+        </ul>
+
+        <h2>Lagring och filhantering</h2>
+        <ul>
+            <li><strong>Lokal lagring:</strong> Om du godkänner det sparas dina tidrapportdata och inställningar direkt i din webbläsare (Local Storage). Detta innebär att informationen stannar på din dator och att ingen data skickas till någon server. Det låter dig fortsätta där du slutade nästa gång du besöker sidan.</li>
+            <li><strong>Ladda ner CSV:</strong> Exporterar alla dina sparade rader (oavsett aktuell filtervy) till en CSV-fil, som kan öppnas i kalkylprogram som Excel eller Google Sheets. Den inkluderar även en summeringsrad.</li>
+            <li><strong>Ladda upp CSV:</strong> Importerar tidrapportdata från en CSV-fil som matchar formatet från nedladdning. Befintlig data raderas innan den nya laddas in.</li>
+            <li><strong>Rensa all data:</strong> Tar bort all din sparade tidrapportdata och alla inställningar från din webbläsare.</li>
+        </ul>
+
+        <p>Vi hoppas att denna förklaring hjälper dig att förstå hur tidrapporten fungerar! Om du har ytterligare frågor, tveka inte att kontakta oss.</p>
+
+        <div class="back-link">
+            <a href="/test/calculatortest.html">Tillbaka till Tidrapporten</a>
+        </div>
+    </div>
+</body>
+</html>
