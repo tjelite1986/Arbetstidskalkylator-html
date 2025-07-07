@@ -1,0 +1,2421 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tidrapport med Löneberäkning</title>
+    <style>
+    /* Global box-sizing for easier layout calculations */
+    *, *::before, *::after {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f5f5f5;
+        color: #333;
+    }
+    /* New style to disable body scroll */
+    body.no-scroll {
+        overflow: hidden;
+    }
+    .topbar {
+    width: 100%;
+    background-color: #333;
+    color: white;
+    padding: 10px 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60px;
+    box-sizing: border-box;
+}
+.topbar h2 {
+    display: none; /* Hide the h2 on desktop as per previous instructions */
+}
+.topbar ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 20px;
+}
+.topbar ul li {
+    margin-bottom: 0;
+}
+.topbar ul li a {
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 10px 15px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+    white-space: nowrap;
+}
+.topbar ul li a:hover {
+    background-color: #575757;
+}
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: white;
+        padding: 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        /* Ensure content doesn't overflow container horizontally */
+        overflow-x: hidden;
+    }
+    h1 {
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 2em;
+    }
+    .settings-section, .ob-legend, .summary {
+        background: #ecf0f1;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        border-left: 5px solid #3498db;
+    }
+    .settings-section h3, .ob-legend h3, .summary h3 {
+        color: #2c3e50;
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 1.3em;
+    }
+    .settings-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+    }
+    .settings-header h3 {
+        margin-bottom: 0;
+    }
+    .settings-icon {
+        cursor: pointer;
+        font-size: 1.5em;
+        color: #3498db;
+        transition: color 0.2s ease;
+    }
+    .settings-icon:hover {
+        color: #2980b9;
+    }
+    .settings-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 10px;
+        align-items: center;
+    }
+    .settings-row label {
+        min-width: 200px;
+        font-weight: bold;
+        color: #444;
+    }
+    .settings-row input[type="number"],
+    .settings-row input[type="month"],
+    .settings-row input[type="date"] { /* Added date input */
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 120px;
+        box-sizing: border-box; /* Ensure padding doesn't increase width */
+    }
+    .settings-row span {
+        font-weight: normal;
+        color: #555;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 25px;
+        font-size: 13px;
+    }
+    th, td {
+        border: 1px solid #e0e0e0;
+        padding: 8px;
+        text-align: center;
+        vertical-align: middle;
+    }
+    th {
+        background-color: #3498db;
+        color: white;
+        font-weight: bold;
+        font-size: 11px;
+        text-transform: uppercase;
+    }
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    .input-field {
+        width: calc(100% - 6px);
+        padding: 5px;
+        border: 1px solid #ddd;
+        background: white;
+        text-align: center;
+        font-size: 12px;
+        border-radius: 3px;
+        box-sizing: border-box;
+    }
+    .input-field:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+    }
+    .input-field.error {
+        border: 2px solid #e74c3c;
+    }
+    .checkbox-field {
+        width: auto;
+        height: 16px;
+        margin: 0;
+        transform: scale(1.1);
+    }
+    .weekend {
+        background-color: #fff8e1 !important;
+    }
+    .red-day {
+        background-color: #ffebf0 !important;
+        color: #c0392b;
+        font-weight: bold;
+    }
+    .sickness-day {
+        background-color: #f0f8ff !important;
+        color: #2b6cb0;
+        font-weight: bold;
+    }
+    .summary {
+        background: #e8f5e8;
+        border-left: 5px solid #27ae60;
+    }
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+        border-bottom: 1px dashed #cfe8cf;
+    }
+    .summary-row:last-child {
+        border-bottom: none;
+    }
+    .summary-row span:first-child {
+        font-weight: normal;
+        color: #555;
+    }
+    .summary-row span:last-child {
+        font-weight: bold;
+        color: #333;
+    }
+    .total {
+        font-size: 1.3em;
+        color: #1a7d43;
+        border-top: 2px solid #27ae60;
+        padding-top: 10px;
+        margin-top: 10px;
+        font-weight: bold;
+    }
+    .tax-section {
+        background: #fff8e1;
+        border-left: 5px solid #ff9800;
+        margin-top: 10px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    .tax-section .summary-row {
+        border-bottom: none;
+    }
+    .ob-legend p {
+        margin: 5px 0;
+        color: #555;
+        font-size: 0.95em;
+    }
+    .btn-group {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+    .btn {
+        background: #3498db;
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 0 8px;
+        font-size: 1em;
+        transition: background 0.3s ease, transform 0.2s ease;
+    }
+    .btn:hover {
+        background: #2980b9;
+        transform: translateY(-2px);
+    }
+    .btn:active {
+        transform: translateY(0);
+    }
+    .day-table-container {
+        margin-top: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        /* Add overflow-x to make the table scrollable horizontally if it gets too wide */
+        overflow-x: auto; 
+    }
+    .remove-day-btn {
+        background: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 3px 6px;
+        cursor: pointer;
+        font-size: 0.7em;
+        transition: background 0.2s ease;
+        margin-left: 5px;
+    }
+    .remove-day-btn:hover {
+        background: #c0392b;
+    }
+
+    /* New: Period View Dropdown & Custom Inputs */
+    .period-view-controls {
+        text-align: center;
+        margin-bottom: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        background-color: #ecf0f1;
+        border-radius: 8px;
+        border-left: 5px solid #3498db;
+    }
+    .period-view-controls label {
+        font-weight: bold;
+        color: #444;
+        margin-right: 5px;
+    }
+    .period-view-controls select,
+    .period-view-controls input[type="date"] {
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1em;
+        box-sizing: border-box;
+        max-width: 200px; /* Limit width for dates */
+    }
+    .period-view-controls select {
+        min-width: 180px;
+        cursor: pointer;
+        background-color: white;
+    }
+    .period-view-controls button {
+        padding: 8px 15px;
+        font-size: 1em;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+    .period-view-controls button:hover {
+        background: #2980b9;
+    }
+    .custom-period-inputs {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .custom-period-inputs.hidden {
+        display: none;
+    }
+
+
+    /* Consent Popup Styling */
+    .consent-popup, .settings-popup {
+        display: none; /* Hidden by default */
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.6); /* Semi-transparent background */
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+    .consent-popup-content, .settings-popup-content {
+        background-color: #fff;
+        /* Removed padding here as it's now handled by inner containers */
+        border-radius: 8px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        text-align: center;
+        max-width: 500px;
+        width: 90%;
+        animation: fadeIn 0.3s ease-out;
+        position: relative; /* For close button positioning */
+        
+        display: flex; /* Use flexbox for layout */
+        flex-direction: column; /* Stack children vertically */
+        max-height: 90vh; /* Limit overall height */
+        overflow: hidden; /* Prevent popup content from spilling outside its own bounds */
+    }
+
+    /* New styles for popup header and scrollable content */
+    .popup-header {
+        padding: 25px 25px 20px 25px; /* Added horizontal padding to header */
+        text-align: center;
+        position: relative; /* For close button */
+        /* Ensure header doesn't shrink vertically too much if content is long */
+        flex-shrink: 0; 
+    }
+    .popup-header h2 {
+        color: #2c3e50;
+        margin-top: 0;
+        margin-bottom: 0;
+        font-size: 1.6em;
+        line-height: 1.2;
+    }
+    .popup-scroll-content {
+        overflow-y: auto; /* Make this section scrollable */
+        padding: 0 25px 25px 25px; /* Consistent horizontal padding, and bottom padding */
+        flex-grow: 1; /* Allow content to fill available space */
+        /* Removed margin-top, padding in header should create space */
+    }
+
+    .consent-popup-content p, .settings-popup-content p {
+        font-size: 1.1em;
+        color: #555;
+        line-height: 1.5;
+        margin-bottom: 25px;
+        text-align: left; /* Align text left for better readability in popups */
+    }
+    .consent-popup-content .btn-group, .settings-popup-content .btn-group {
+        padding-top: 15px; /* Add some space above buttons */
+        border-top: 1px solid #eee; /* Visual separator */
+    }
+    .consent-popup-content .btn, .settings-popup-content .btn {
+        padding: 10px 20px;
+        font-size: 1em;
+        margin: 0 10px;
+    }
+    .consent-popup-content .btn-decline {
+        background-color: #95a5a6;
+    }
+    .consent-popup-content .btn-decline:hover {
+        background-color: #7f8c8d;
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 1.8em;
+        cursor: pointer;
+        color: #888;
+        transition: color 0.2s ease;
+    }
+    .close-btn:hover {
+        color: #333;
+    }
+
+    .settings-popup-content .settings-row {
+        margin-bottom: 15px;
+        /* Align items to start for better readability in settings popup */
+        align-items: flex-start;
+    }
+    .settings-popup-content .settings-row label {
+        text-align: left;
+        flex-grow: 1;
+        min-width: unset;
+        width: auto;
+    }
+    .settings-popup-content .settings-row input[type="number"] {
+        width: 100px;
+    }
+    .settings-popup-content .settings-row input[type="checkbox"] {
+        width: auto;
+        margin-right: 10px;
+        /* Vertically align checkboxes better */
+        align-self: center; 
+    }
+    .settings-popup-content .btn-group {
+        margin-top: 25px;
+        padding-top: 10px;
+        border-top: 1px solid #eee;
+    }
+    .settings-popup-content .btn {
+        width: auto;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Storage Status Message */
+    #storageStatus {
+        text-align: center;
+        margin-top: 20px;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 0.9em;
+        color: #555;
+        background-color: #e0e0e0;
+        display: none;
+    }
+    #storageStatus.enabled {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    #storageStatus.disabled {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    @media (max-width: 768px) {
+        .container {
+            margin: 10px;
+            padding: 15px;
+        }
+  .topbar {
+  height: auto;
+  padding: 10px 0;
+}
+
+.topbar ul {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.topbar ul li a {
+  padding: 8px 12px;
+  font-size: 0.9em;
+}
+
+        .settings-row {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .settings-row label {
+            min-width: unset;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        .settings-row input {
+            width: 100%;
+        }
+        .btn {
+            width: calc(100% - 16px);
+            margin: 5px 8px;
+        }
+        table, thead, tbody, th, td, tr {
+            display: block;
+        }
+        thead tr {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+        }
+        tr {
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        td {
+            border: none;
+            border-bottom: 1px solid #eee;
+            position: relative;
+            padding-left: 50%;
+            text-align: right;
+            font-size: 14px;
+        }
+        td:last-child {
+            border-bottom: 0;
+        }
+        td:before {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            width: 45%;
+            padding-right: 10px;
+            white-space: nowrap;
+            text-align: left;
+            font-weight: bold;
+            color: #555;
+        }
+        /* Labeling the data cells for mobile view */
+        td:nth-of-type(1):before { content: "Datum"; }
+        td:nth-of-type(2):before { content: "Dag"; }
+        td:nth-of-type(3):before { content: "Röd dag"; }
+        td:nth-of-type(4):before { content: "Sjukdag"; }
+        td:nth-of-type(5):before { content: "Starttid"; }
+        td:nth-of-type(6):before { content: "Sluttid"; }
+        td:nth-of-type(7):before { content: "Rast Start"; }
+        td:nth-of-type(8):before { content: "Rast Slut"; }
+        td:nth-of-type(9):before { content: "Rast (min)"; }
+        td:nth-of-type(10):before { content: "Arbetstid"; }
+        td:nth-of-type(11):before { content: "Grundlön"; }
+        td:nth-of-type(12):before { content: "OB-tillägg"; }
+        td:nth-of-type(13):before { content: "Brutto"; }
+        td:nth-of-type(14):before { content: "Skatt"; }
+        td:nth-of-type(15):before { content: "Netto"; }
+        td:nth-of-type(16):before { content: "Åtgärder"; }
+        .input-field {
+            width: calc(100% - 10px);
+        }
+        .checkbox-field {
+            margin: 0 auto;
+            display: block;
+        }
+        .summary-row {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .summary-row span:last-child {
+            margin-top: 5px;
+        }
+
+        .consent-popup-content, .settings-popup-content {
+            /* Removed direct padding, handled by popup-header/scroll-content */
+            padding: 0; /* Important: reset padding here */
+        }
+        .popup-header {
+            padding: 15px; /* Adjust header padding for mobile */
+        }
+        .popup-scroll-content {
+            padding: 0 15px 15px 15px; /* Adjust content padding for mobile */
+        }
+        .consent-popup-content h2, .settings-popup-content h2 {
+            font-size: 1.4em;
+        }
+        .consent-popup-content p, .settings-popup-content p {
+            font-size: 1em;
+        }
+        .consent-popup-content .btn, .settings-popup-content .btn {
+            width: 100%;
+            margin: 5px 0;
+        }
+        .period-view-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .period-view-controls select,
+        .period-view-controls input[type="date"] {
+            width: 100%;
+            max-width: none;
+        }
+        .custom-period-inputs {
+            flex-direction: column;
+            width: 100%;
+        }
+        .custom-period-inputs label {
+            margin-bottom: 5px;
+        }
+    }
+</style>
+
+</head>
+<body>
+  <div class="topbar">
+        <h2>Navigation</h2>
+        <ul>
+            <li><a href="/index.html">Hem</a></li>
+            <li><a href="/calculator.html">Butik Kalkylator</a></li>
+            <li><a href="/calculatorv2.html">Kalkylator v2</a></li>
+        </ul>
+    </div>
+    <div class="container">
+        <h1>📊 Tidrapport med Löneberäkning och OB-tillägg</h1>
+        <div style="text-align: center; margin-bottom: 20px; font-size: 1.1em; color: #666;">
+            <span id="currentTime"></span>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 25px;">
+            <a href="hur_det_fungerar.html" class="btn" style="background-color: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Hur beräknas min lön?</a>
+        </div>
+        <div class="settings-section">
+            <div class="settings-header">
+                <h3>Löne- och OB-inställningar</h3>
+                <span class="settings-icon" onclick="showSettingsPopup()">⚙️</span>
+            </div>
+            <div class="settings-row">
+                <label for="basePay">Grundlön (kr/tim):</label>
+                <input type="number" id="basePay" value="162.98" step="0.01" min="0" oninput="calculateAll(); saveData();">
+            </div>
+            <div class="settings-row">
+                <label for="taxRate">Skattesats (%):</label>
+                <input type="number" id="taxRate" value="30" step="0.01" min="0" max="100" oninput="calculateAll(); saveData();"> <span>% av bruttolön</span>
+            </div>
+        </div>
+
+        <div class="ob-legend">
+            <h3>OB-tillägg förklaring:</h3>
+            <p><strong>Vardagar från 18:15:</strong> 50% av grundlön (måndag-fredag)</p>
+            <p><strong>Vardagar efter 20:00:</strong> 70% av grundlön (måndag-fredag)</p>
+            <p><strong>Lördag från 12:00:</strong> 100% av grundlön</p>
+            <p><strong>Söndag hela dagen:</strong> 100% av grundlön</p>
+            <p><strong>Helgtillägg:</strong> 100% av grundlön (alla timmar på helgdagar)</p>
+            <p><strong>Röd dag:</strong> Kryssa i för att räkna dagen som helgdag (100% tillägg). Systemet försöker förfylla baserat på svenska helgdagar 2025 och söndagar.</p>
+            <p style="margin-top: 15px;"><strong>Sjuklön:</strong></p>
+            <ul>
+                <li>1:a dagen (karensdag): Ingen ersättning.</li>
+                <li>Dag 2-14: 80% av grundlön baserat på 8 timmars arbetsdag.</li>
+            </ul>
+        </div>
+
+        <div class="period-view-controls">
+            <label for="periodSelect">Välj Period:</label>
+            <select id="periodSelect" onchange="handlePeriodChange()">
+                <option value="all">Alla rader</option>
+                <option value="currentMonth">Denna månaden</option>
+                <option value="lastMonth">Förra månaden</option>
+                <option value="custom">Anpassad period</option>
+            </select>
+            <div id="customPeriodInputs" class="custom-period-inputs hidden">
+                <label for="customStartDate">Från:</label>
+                <input type="date" id="customStartDate">
+                <label for="customEndDate">Till:</label>
+                <input type="date" id="customEndDate">
+                <button onclick="applyCustomPeriod()">Visa</button>
+            </div>
+        </div>
+        <div class="btn-group">
+            <button class="btn" onclick="addDay()">➕ Lägg till dag</button>
+            <button class="btn" onclick="calculateAll()">🔄 Beräkna totalt</button>
+            <button class="btn" onclick="document.getElementById('fileInput').click()">⬆️ Ladda upp CSV</button>
+            <input type="file" id="fileInput" accept=".csv" style="display: none;" onchange="loadFromCsv(event)">
+            <button class="btn" onclick="exportToCsv()">📥 Ladda ner CSV</button>
+            <button class="btn" onclick="clearAllData(false)">🗑️ Rensa all data</button>
+        </div>
+
+        <div class="day-table-container">
+            <table id="timeReportTable">
+                <thead>
+                    <tr>
+                        <th>Datum</th>
+                        <th>Dag</th>
+                        <th>Röd dag</th>
+                        <th>Sjukdag</th> <th>Starttid</th>
+                        <th>Sluttid</th>
+                        <th>Rast Start</th>
+                        <th>Rast Slut</th>
+                        <th>Rast (min)</th>
+                        <th>Arbetstid</th>
+                        <th>Grundlön</th>
+                        <th>OB-tillägg</th>
+                        <th>Brutto</th>
+                        <th>Skatt</th>
+                        <th>Netto</th>
+                        <th>Åtgärder</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                </tbody>
+            </table>
+        </div>
+
+        <div class="summary">
+            <h3>📈 Månadssummering</h3>
+            <div class="summary-row">
+                <span>Totala arbetstimmar:</span>
+                <span id="totalHours">0.0</span>
+            </div>
+            <div class="summary-row">
+                <span>Grundlön (exkl. OB):</span>
+                <span id="totalBasePay">0 kr</span>
+            </div>
+            <div class="summary-row">
+                <span>OB-tillägg - Vardag kväll (18:15):</span>
+                <span id="totalEveningPay">0 kr</span>
+            </div>
+            <div class="summary-row">
+                <span>OB-tillägg - Vardag sen kväll (20:00):</span>
+                <span id="totalLateEveningPay">0 kr</span>
+            </div>
+            <div class="summary-row">
+                <span>OB-tillägg - Lördag (från 12:00):</span>
+                <span id="totalSaturdayPay">0 kr</span>
+            </div>
+            <div class="summary-row">
+                <span>OB-tillägg - Söndag:</span>
+                <span id="totalSundayPay">0 kr</span>
+            </div>
+            <div class="summary-row">
+                <span>OB-tillägg - Helgdagar:</span>
+                <span id="totalHolidayPay">0 kr</span>
+            </div>
+            <div class="summary-row">
+                <span>Antal Sjukdagar:</span> <span id="totalSickDays">0</span>
+            </div>
+             <div class="summary-row">
+                <span>Sjuklön (80%):</span> <span id="totalSickPay">0 kr</span>
+            </div>
+            <div class="summary-row total">
+                <span>BRUTTOLÖN:</span>
+                <span id="grandTotal">0 kr</span>
+            </div>
+            <div class="summary-row tax-section">
+                <span>Skatt (<span id="taxRateDisplay">30</span>%):</span>
+                <span id="totalTax">0 kr</span>
+            </div>
+            <div class="summary-row total">
+                <span>NETTOLÖN (efter skatt):</span>
+                <span id="netTotal">0 kr</span>
+            </div>
+        </div>
+
+        <div id="storageStatus"></div>
+    </div>
+
+    
+<div id="consentPopup" class="consent-popup">
+        <div class="consent-popup-content">
+            <div class="popup-header">
+                <h2>Om lagring av din tidrapport</h2>
+                <span class="close-btn" onclick="hideConsentPopup()">&times;</span>
+            </div>
+            <div class="popup-scroll-content">
+                <p>Denna tidrapport kan spara dina inmatade tider och inställningar lokalt i din webbläsare, så att du kan fortsätta där du slutade nästa gång du besöker sidan. Informationen lagras endast på din egen dator och skickas inte till någon server.</p>
+                <p>Vill du tillåta att dina tidrapportdata sparas lokalt i din webbläsare?</p>
+                <div class="btn-group">
+                    <button class="btn" onclick="acceptStorage()">Ja, godkänn</button>
+                    <button class="btn btn-decline" onclick="declineStorage()">Nej, fortsätt utan att spara</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+<div id="settingsPopup" class="settings-popup">
+        <div class="settings-popup-content">
+            <div class="popup-header">
+                <h2>Avancerade OB-inställningar</h2>
+                <span class="close-btn" onclick="hideSettingsPopup()">&times;</span>
+            </div>
+            <div class="popup-scroll-content">
+                <div class="settings-row">
+                    <label for="popupEveningRate">Vardagar från 18:15 (50%):</label>
+                    <input type="number" id="popupEveningRate" value="50" step="0.01" min="0" max="200"> <span>% av grundlön</span>
+                </div>
+                <div class="settings-row">
+                    <label for="popupLateEveningRate">Vardagar efter 20:00 (70%):</label>
+                    <input type="number" id="popupLateEveningRate" value="70" step="0.01" min="0" max="200"> <span>% av grundlön</span>
+                </div>
+                <div class="settings-row">
+                    <label for="popupSaturdayRate">Lördag från 12:00 (100%):</label>
+                    <input type="number" id="popupSaturdayRate" value="100" step="0.01" min="0" max="200"> <span>% av grundlön</span>
+                </div>
+                <div class="settings-row">
+                    <label for="popupSundayRate">Söndag hela dagen (100%):</label>
+                    <input type="number" id="popupSundayRate" value="100" step="0.01" min="0" max="200"> <span>% av grundlön</span>
+                </div>
+                <div class="settings-row">
+                    <label for="popupHolidayRate">Helgtillägg (100%):</label>
+                    <input type="number" id="popupHolidayRate" value="100" step="0.01" min="0" max="200"> <span>% av grundlön</span>
+                </div>
+                <div class="btn-group">
+                    <button class="btn" onclick="saveSettingsAndRecalculate()">Spara & Stäng</button>
+                    <button class="btn btn-decline" onclick="hideSettingsPopup()">Avbryt</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let dayCounter = 0; // Unique ID for each day row
+        let allDaysData = {}; // Object to store data for each day, keyed by unique ID
+        let localStorageConsentGiven = null; // null = no decision, true = accepted, false = declined
+        let currentViewFilter = 'all'; // Tracks the currently active filter: 'all', 'currentMonth', 'lastMonth', 'custom'
+
+        // Svenska helgdagar 2025. Uppdatera denna lista årligen.
+        const holidays = [
+            '2025-01-01', '2025-01-06', '2025-04-18', '2025-04-19', '2025-04-20', '2025-04-21',
+            '2025-05-01', '2025-05-29', '2025-06-06', '2025-06-20', '2025-06-21', // Midsommarafton, Midsommardagen
+            '2025-11-01', // Alla helgons dag
+            '2025-12-24', '2025-12-25', '2025-12-26'
+        ];
+
+        // --- Consent Functions ---
+        function showConsentPopup() {
+            document.getElementById('consentPopup').style.display = 'flex';
+            document.body.classList.add('no-scroll'); // Disable body scroll
+        }
+
+        function hideConsentPopup() {
+            document.getElementById('consentPopup').style.display = 'none';
+            document.body.classList.remove('no-scroll'); // Enable body scroll
+        }
+
+        function acceptStorage() {
+            localStorage.setItem('localStorageConsentGiven', 'true');
+            localStorageConsentGiven = true;
+            hideConsentPopup();
+            loadData(); // Attempt to load data after consent is given
+            updateStorageStatus();
+        }
+
+        function declineStorage() {
+            localStorage.setItem('localStorageConsentGiven', 'false'); // Explicitly save that consent was denied
+            localStorageConsentGiven = false;
+            hideConsentPopup();
+            // Clear all data silently if consent is declined, but don't reset consent status
+            clearAllData(true);
+            // Ensure a blank day is added if there's no data to start with
+            if (Object.keys(allDaysData).length === 0) {
+                addDay(null, true); // Add a blank day so user can start immediately, don't save immediately
+            }
+            updateStorageStatus();
+        }
+
+        function updateStorageStatus() {
+            const statusDiv = document.getElementById('storageStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.classList.remove('enabled', 'disabled');
+
+            if (localStorageConsentGiven === true) {
+                statusDiv.textContent = '✅ Lokal lagring är aktiverad. Dina data sparas automatiskt i din webbläsare.';
+                statusDiv.classList.add('enabled');
+            } else if (localStorageConsentGiven === false) {
+                statusDiv.textContent = '⚠️ Lokal lagring är inaktiverad. Dina data sparas INTE i din webbläsare och försvinner när du stänger sidan.';
+                statusDiv.classList.add('disabled');
+            } else {
+                statusDiv.textContent = ''; // Hidden if consent not yet decided
+                statusDiv.style.display = 'none';
+            }
+        }
+
+        // --- Settings Popup Functions ---
+        function showSettingsPopup() {
+            // Load current values into popup fields
+            document.getElementById('popupEveningRate').value = localStorage.getItem('eveningRate') || '50';
+            document.getElementById('popupLateEveningRate').value = localStorage.getItem('lateEveningRate') || '70';
+            document.getElementById('popupSaturdayRate').value = localStorage.getItem('saturdayRate') || '100';
+            document.getElementById('popupSundayRate').value = localStorage.getItem('sundayRate') || '100';
+            document.getElementById('popupHolidayRate').value = localStorage.getItem('holidayRate') || '100';
+            
+            document.getElementById('settingsPopup').style.display = 'flex';
+            document.body.classList.add('no-scroll'); // Disable body scroll
+        }
+
+        function hideSettingsPopup() {
+            document.getElementById('settingsPopup').style.display = 'none';
+            document.body.classList.remove('no-scroll'); // Enable body scroll
+        }
+
+        function saveSettingsAndRecalculate() {
+            // Save settings from popup to localStorage (and use them indirectly)
+            localStorage.setItem('eveningRate', document.getElementById('popupEveningRate').value);
+            localStorage.setItem('lateEveningRate', document.getElementById('popupLateEveningRate').value);
+            localStorage.setItem('saturdayRate', document.getElementById('popupSaturdayRate').value);
+            localStorage.setItem('sundayRate', document.getElementById('popupSundayRate').value);
+            localStorage.setItem('holidayRate', document.getElementById('popupHolidayRate').value);
+
+            // Re-calculate all rows and totals using the new rates
+            for (const dayId in allDaysData) {
+                calculateRow(dayId); // This will also update allDaysData[dayId]
+            }
+            calculateAll();
+            saveData(); // Save all data including updated rates
+            hideSettingsPopup();
+        }
+
+        // --- Helper Functions ---
+
+        /**
+         * Converts a time string (e.g., "09:00") to minutes from midnight.
+         * @param {string} timeStr - The time string.
+         * @returns {number} Minutes from midnight.
+         */
+        function timeToMinutes(timeStr) {
+            if (!timeStr) return null; // Return null if empty or invalid
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            if (isNaN(hours) || isNaN(minutes)) return null;
+            return hours * 60 + minutes;
+        }
+
+        /**
+         * Converts minutes to hours (e.g., 90 minutes -> 1.5 hours).
+         * @param {number} minutes - The number of minutes.
+         * @returns {number} Hours.
+         */
+        function minutesToHours(minutes) {
+            return minutes / 60;
+        }
+
+        /**
+         * Formats a Date object to 'YYYY-MM-DD' string.
+         * @param {Date} date - The date object.
+         * @returns {string} Formatted date string.
+         */
+        function formatDateToISO(date) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        /**
+         * Returns the number of days in a given month and year.
+         * @param {number} year - The year (e.g., 2025).
+         * @param {number} month - The month (0-indexed, 0 for January).
+         * @returns {number} The number of days in the month.
+         */
+        function getDaysInMonth(year, month) {
+            return new Date(year, month + 1, 0).getDate();
+        }
+
+        /**
+         * Updates the current time display.
+         */
+        function updateClock() {
+            const now = new Date();
+            const options = {
+                timeZone: 'Europe/Stockholm',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                weekday: 'long'
+            };
+            const formatter = new Intl.DateTimeFormat('sv-SE', options);
+            document.getElementById('currentTime').textContent = `🕐 ${formatter.format(now)}`;
+        }
+        
+        // --- Core UI Management ---
+
+        /**
+         * Adds a new day row to the table.
+         * @param {Date|null} [initialDate=null] - Specific date to add. If null, determines based on last day or current period.
+         * @param {boolean} [skipSave=false] - If true, skips saving data immediately after adding.
+         */
+        function addDay(initialDate = null, skipSave = false) {
+            const tableBody = document.querySelector('#timeReportTable tbody');
+            const newDayId = `day_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+            dayCounter++;
+
+            if (!initialDate) {
+                // If no initialDate provided, determine it based on existing data or current date
+                const sortedDayIds = Object.keys(allDaysData).sort((idA, idB) => {
+                    const dateA = new Date(allDaysData[idA].date + 'T00:00:00');
+                    const dateB = new Date(allDaysData[idB].date + 'T00:00:00');
+                    return dateA - dateB;
+                });
+
+                if (sortedDayIds.length > 0) {
+                    const lastDayId = sortedDayIds[sortedDayIds.length - 1];
+                    const lastDate = new Date(allDaysData[lastDayId].date + 'T00:00:00');
+                    initialDate = new Date(lastDate);
+                    initialDate.setDate(lastDate.getDate() + 1); // Next chronological day
+                } else {
+                    initialDate = new Date(); // Default to today if no days exist
+                }
+            }
+            
+            const initialDateISO = formatDateToISO(initialDate);
+
+            allDaysData[newDayId] = {
+                date: initialDateISO,
+                start: '',
+                end: '',
+                break: 0,
+                breakStart: '', // New field
+                breakEnd: '',   // New field
+                redDay: false,
+                sickDay: false, // NEW FIELD
+                workHours: 0,
+                basePayAmount: 0,
+                obTotal: 0,
+                obBreakdown: {},
+                totalPay: 0,
+                taxAmount: 0,
+                netPay: 0
+            }; // Initialize all data fields for the new day
+
+            const newRow = tableBody.insertRow();
+            newRow.id = `row_${newDayId}`;
+
+            // Check if today is a holiday or Sunday for initial red day status
+            const currentDayDateObj = new Date(initialDateISO);
+            const isSunday = currentDayDateObj.getDay() === 0;
+            const isHoliday = holidays.includes(initialDateISO);
+            const initialRedDay = isSunday || isHoliday;
+            
+            // Apply initial weekend/red-day styling
+            if (isSunday || currentDayDateObj.getDay() === 6) { // Sunday or Saturday
+                newRow.classList.add('weekend');
+            }
+            if (initialRedDay) {
+                newRow.classList.add('red-day');
+            }
+            allDaysData[newDayId].redDay = initialRedDay; // Update stored data
+
+            newRow.innerHTML = `
+                <td><input type="date" class="input-field" id="date_${newDayId}" value="${initialDateISO}" onchange="updateDayData('${newDayId}');"></td>
+                <td id="dayName_${newDayId}">${new Intl.DateTimeFormat('sv-SE', { weekday: 'long' }).format(currentDayDateObj)}</td>
+                <td><input type="checkbox" class="checkbox-field" id="redDay_${newDayId}" ${initialRedDay ? 'checked' : ''} onchange="updateRedDay('${newDayId}');"></td>
+                <td><input type="checkbox" class="checkbox-field" id="sickDay_${newDayId}" onchange="updateSickDay('${newDayId}');"></td> <td><input type="time" class="input-field" id="start_${newDayId}" onchange="calculateRow('${newDayId}');"></td>
+                <td><input type="time" class="input-field" id="end_${newDayId}" onchange="calculateRow('${newDayId}');"></td>
+                <td><input type="time" class="input-field" id="breakStart_${newDayId}" onchange="handleBreakTimeChange('${newDayId}');"></td>
+                <td><input type="time" class="input-field" id="breakEnd_${newDayId}" onchange="handleBreakTimeChange('${newDayId}');"></td>
+                <td><input type="number" class="input-field" id="break_${newDayId}" value="0" min="0" oninput="handleBreakMinutesChange('${newDayId}');"></td>
+                <td id="hours_${newDayId}">0.0</td>
+                <td id="basePay_${newDayId}">0 kr</td>
+                <td id="obPay_${newDayId}">0 kr</td>
+                <td id="total_${newDayId}">0 kr</td>
+                <td id="tax_${newDayId}">0 kr</td>
+                <td id="net_${newDayId}">0 kr</td>
+                <td><button class="remove-day-btn" onclick="removeDay('${newDayId}')">X</button></td>
+            `;
+
+            // Initial state for break inputs
+            toggleBreakInputs(newDayId);
+
+            if (!skipSave) {
+                saveData(); // Save data after adding a day
+            }
+            filterAndDisplayDays(); // Re-apply current filter after adding a new day
+        }
+
+        /**
+         * Toggles the disabled state of break input fields based on which method is preferred.
+         * @param {string} dayId - The unique ID of the day row.
+         */
+        function toggleBreakInputs(dayId) {
+            const breakStartInput = document.getElementById(`breakStart_${dayId}`);
+            const breakEndInput = document.getElementById(`breakEnd_${dayId}`);
+            const breakMinutesInput = document.getElementById(`break_${dayId}`);
+
+            const hasBreakTimes = breakStartInput.value && breakEndInput.value;
+
+            breakMinutesInput.disabled = hasBreakTimes;
+            breakMinutesInput.classList.toggle('disabled', hasBreakTimes); // Optional: visual cue
+
+            breakStartInput.disabled = !hasBreakTimes && (parseInt(breakMinutesInput.value) > 0);
+            breakEndInput.disabled = !hasBreakTimes && (parseInt(breakMinutesInput.value) > 0);
+            breakStartInput.classList.toggle('disabled', !hasBreakTimes && (parseInt(breakMinutesInput.value) > 0));
+            breakEndInput.classList.toggle('disabled', !hasBreakTimes && (parseInt(breakMinutesInput.value) > 0));
+        }
+
+        /**
+         * Handles change in break start/end time fields.
+         * @param {string} dayId - The unique ID of the day row.
+         */
+        function handleBreakTimeChange(dayId) {
+            const breakStartInput = document.getElementById(`breakStart_${dayId}`);
+            const breakEndInput = document.getElementById(`breakEnd_${dayId}`);
+            const breakMinutesInput = document.getElementById(`break_${dayId}`);
+
+            if (breakStartInput.value || breakEndInput.value) {
+                // If either break time is entered, clear and disable break minutes
+                breakMinutesInput.value = '0';
+            }
+            toggleBreakInputs(dayId);
+            calculateRow(dayId);
+        }
+
+        /**
+         * Handles change in break minutes field.
+         * @param {string} dayId - The unique ID of the day row.
+         */
+        function handleBreakMinutesChange(dayId) {
+            const breakStartInput = document.getElementById(`breakStart_${dayId}`);
+            const breakEndInput = document.getElementById(`breakEnd_${dayId}`);
+            const breakMinutesInput = document.getElementById(`break_${dayId}`);
+
+            if (parseInt(breakMinutesInput.value) > 0) {
+                // If break minutes are entered, clear and disable break times
+                breakStartInput.value = '';
+                breakEndInput.value = '';
+            }
+            toggleBreakInputs(dayId);
+            calculateRow(dayId);
+        }
+
+
+        /**
+         * Updates the day name and red day status for a row when date input changes.
+         * @param {string} dayId - The unique ID of the day row.
+         */
+        function updateDayData(dayId) {
+            const dateInput = document.getElementById(`date_${dayId}`);
+            const dayNameCell = document.getElementById(`dayName_${dayId}`);
+            const redDayCheckbox = document.getElementById(`redDay_${dayId}`);
+            const sickDayCheckbox = document.getElementById(`sickDay_${dayId}`); // NEW
+            const row = document.getElementById(`row_${dayId}`);
+
+            if (dateInput.value) {
+                const date = new Date(dateInput.value + 'T00:00:00'); // Add time to avoid timezone issues
+                const dayOfWeek = date.getDay(); // 0=Sunday, 1=Monday...
+                const dateISO = formatDateToISO(date);
+
+                dayNameCell.textContent = new Intl.DateTimeFormat('sv-SE', { weekday: 'long' }).format(date);
+                
+                // Determine initial redDay status
+                const isSunday = dayOfWeek === 0;
+                const isHoliday = holidays.includes(dateISO);
+                // Only change if the user hasn't explicitly checked/unchecked it
+                if (!redDayCheckbox.dataset.userModified) {
+                    redDayCheckbox.checked = isSunday || isHoliday;
+                }
+                
+                // Update row styling
+                row.classList.remove('weekend', 'red-day', 'sickness-day'); // Remove all relevant classes first
+                if (sickDayCheckbox.checked) { // Sickness overrides other styling
+                    row.classList.add('sickness-day');
+                } else if (redDayCheckbox.checked) {
+                    row.classList.add('red-day');
+                } else if (isSunday || date.getDay() === 6) { // Sunday or Saturday
+                    row.classList.add('weekend');
+                }
+
+                allDaysData[dayId].date = dateInput.value; // Update stored date
+                allDaysData[dayId].redDay = redDayCheckbox.checked; // Update stored redDay status
+                allDaysData[dayId].sickDay = sickDayCheckbox.checked; // NEW: Update stored sickDay status
+                calculateRow(dayId); // Recalculate row based on new date/redDay/sickDay status
+                saveData();
+                filterAndDisplayDays(); // Re-apply filter in case date change affects visibility
+            }
+        }
+
+        /**
+         * Updates the red day status and styling for a row based on checkbox.
+         * @param {string} dayId - The unique ID of the day row.
+         */
+        function updateRedDay(dayId) {
+            const row = document.getElementById(`row_${dayId}`);
+            const redDayCheckbox = document.getElementById(`redDay_${dayId}`);
+            const sickDayCheckbox = document.getElementById(`sickDay_${dayId}`); // NEW
+            const dateInput = document.getElementById(`date_${dayId}`);
+            
+            // Mark that the user has manually interacted with the checkbox
+            redDayCheckbox.dataset.userModified = 'true';
+
+            if (dateInput.value) {
+                const date = new Date(dateInput.value + 'T00:00:00'); // Add time to avoid timezone issues
+                const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                
+                // Update row styling
+                row.classList.remove('weekend', 'red-day', 'sickness-day'); // Reset classes
+                if (sickDayCheckbox.checked) { // Sickness overrides
+                    row.classList.add('sickness-day');
+                } else if (redDayCheckbox.checked) {
+                    row.classList.add('red-day');
+                } else if (isWeekend) {
+                    row.classList.add('weekend');
+                }
+                
+                allDaysData[dayId].redDay = redDayCheckbox.checked; // Update stored data
+                calculateRow(dayId);
+            }
+        }
+
+        /**
+         * NEW: Updates the sick day status and styling for a row based on checkbox.
+         * Disables time inputs if sick day is checked.
+         * @param {string} dayId - The unique ID of the day row.
+         */
+        function updateSickDay(dayId) {
+            const row = document.getElementById(`row_${dayId}`);
+            const sickDayCheckbox = document.getElementById(`sickDay_${dayId}`);
+            const redDayCheckbox = document.getElementById(`redDay_${dayId}`); // Get red day checkbox
+            const dateInput = document.getElementById(`date_${dayId}`);
+
+            const startInput = document.getElementById(`start_${dayId}`);
+            const endInput = document.getElementById(`end_${dayId}`);
+            const breakInput = document.getElementById(`break_${dayId}`);
+            const breakStartInput = document.getElementById(`breakStart_${dayId}`);
+            const breakEndInput = document.getElementById(`breakEnd_${dayId}`);
+
+            allDaysData[dayId].sickDay = sickDayCheckbox.checked; // Update stored data
+
+            // Disable/enable time inputs
+            const disableInputs = sickDayCheckbox.checked;
+            startInput.disabled = disableInputs;
+            endInput.disabled = disableInputs;
+            breakInput.disabled = disableInputs;
+            breakStartInput.disabled = disableInputs;
+            breakEndInput.disabled = disableInputs;
+
+            // Clear time inputs if sick day is checked
+            if (disableInputs) {
+                startInput.value = '';
+                endInput.value = '';
+                breakInput.value = '0';
+                breakStartInput.value = '';
+                breakEndInput.value = '';
+            }
+
+            // Update row styling
+            row.classList.remove('weekend', 'red-day', 'sickness-day'); // Reset all relevant classes
+            if (sickDayCheckbox.checked) {
+                row.classList.add('sickness-day');
+                redDayCheckbox.checked = false; // Uncheck red day if sick day is checked
+                redDayCheckbox.disabled = true; // Disable red day checkbox
+            } else {
+                redDayCheckbox.disabled = false; // Enable red day checkbox
+                // Re-apply red day/weekend styling if sick day is unchecked
+                const date = new Date(dateInput.value + 'T00:00:00');
+                const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                if (redDayCheckbox.checked) {
+                    row.classList.add('red-day');
+                } else if (isWeekend) {
+                    row.classList.add('weekend');
+                }
+            }
+
+            calculateRow(dayId); // Recalculate based on new sick day status
+            saveData();
+        }
+
+
+        /**
+         * Calculates the OB time for a given work period.
+         * Handles overnight shifts and various OB rules.
+         * @param {Array<Array<number>>} workSegments - An array of [startMinutes, endMinutes] for work periods.
+         * @param {Date} dateObj - The date object for the work day.
+         * @param {boolean} isRedDay - True if the day is marked as a red day/holiday.
+         * @returns {Object} An object with minutes for each OB category.
+         */
+        function calculateOB(workSegments, dateObj, isRedDay) {
+            let totalEveningMinutes = 0;
+            let totalLateEveningMinutes = 0;
+            let totalSaturdayMinutes = 0;
+            let totalSundayMinutes = 0;
+            let totalHolidayMinutes = 0;
+
+            const dayOfWeek = dateObj.getDay(); // 0=söndag, 1=måndag, ..., 6=lördag
+
+            for (const [segmentStart, segmentEnd] of workSegments) {
+                if (segmentStart === null || segmentEnd === null || segmentEnd <= segmentStart) {
+                    continue; // Skip invalid or zero-length segments
+                }
+
+                // If it's marked as red day, all work time gets holiday rate
+                if (isRedDay) {
+                    totalHolidayMinutes += (segmentEnd - segmentStart);
+                    continue; // Move to next segment
+                }
+
+                // If it's Sunday, all work time gets Sunday rate (100%)
+                if (dayOfWeek === 0) { // Sunday
+                    totalSundayMinutes += (segmentEnd - segmentStart);
+                    continue; // Move to next segment
+                }
+
+                // If it's Saturday, calculate from 12:00 (100%)
+                if (dayOfWeek === 6) { // Saturday
+                    const saturdayOBStart = 12 * 60; // 12:00 in minutes
+                    
+                    // Calculate overlap with Saturday OB period (12:00 to 24:00)
+                    const obStartActual = Math.max(segmentStart, saturdayOBStart);
+                    const obEndActual = Math.min(segmentEnd, 24 * 60); // Ensure it doesn't go past midnight for calculation on current day
+                    
+                    totalSaturdayMinutes += Math.max(0, obEndActual - obStartActual);
+                    continue; // Move to next segment
+                }
+
+                // Weekdays (Monday-Friday): Calculate OB rates
+                if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                    const eveningOBStart = 18 * 60 + 15; // 18:15
+                    const lateEveningOBStart = 20 * 60; // 20:00
+
+                    // Calculate evening OB (18:15 - 19:59)
+                    const eveningOverlapStart = Math.max(segmentStart, eveningOBStart);
+                    const eveningOverlapEnd = Math.min(segmentEnd, lateEveningOBStart);
+                    totalEveningMinutes += Math.max(0, eveningOverlapEnd - eveningOverlapStart);
+
+                    // Calculate late evening OB (20:00 - 24:00)
+                    const lateEveningOverlapStart = Math.max(segmentStart, lateEveningOBStart);
+                    const lateEveningOverlapEnd = Math.min(segmentEnd, 24 * 60); // Max to midnight
+                    totalLateEveningMinutes += Math.max(0, lateEveningOverlapEnd - lateEveningOverlapStart);
+                }
+            }
+
+            return {
+                evening: totalEveningMinutes,
+                lateEvening: totalLateEveningMinutes,
+                saturday: totalSaturdayMinutes,
+                sunday: totalSundayMinutes,
+                holiday: totalHolidayMinutes
+            };
+        }
+
+        /**
+         * Subtracts a break segment from a work segment, handling overnight cases.
+         * Returns an array of new work segments.
+         * @param {number} workStart - Start of work segment (minutes from midnight).
+         * @param {number} workEnd - End of work segment (minutes from midnight). Can be next day.
+         * @param {number} breakStart - Start of break segment (minutes from midnight).
+         * @param {number} breakEnd - End of break segment (minutes from midnight). Can be next day.
+         * @returns {Array<Array<number>>} An array of new [start, end] work segments.
+         */
+        function subtractBreakFromWork(workStart, workEnd, breakStart, breakEnd) {
+            const segments = [];
+
+            // Case 1: Break is entirely before work or entirely after work (no overlap)
+            if (breakEnd <= workStart || breakStart >= workEnd) {
+                segments.push([workStart, workEnd]);
+                return segments;
+            }
+
+            // Case 2: Break starts before work segment and ends within work segment
+            if (breakStart < workStart && breakEnd > workStart && breakEnd < workEnd) {
+                segments.push([breakEnd, workEnd]);
+                return segments;
+            }
+
+            // Case 3: Break starts within work segment and ends after work segment
+            if (breakStart > workStart && breakStart < workEnd && breakEnd >= workEnd) {
+                segments.push([workStart, breakStart]);
+                return segments;
+            }
+
+            // Case 4: Break is entirely within work segment
+            if (breakStart >= workStart && breakEnd <= workEnd) {
+                if (breakStart > workStart) {
+                    segments.push([workStart, breakStart]);
+                }
+                if (breakEnd < workEnd) {
+                    segments.push([breakEnd, workEnd]);
+                }
+                return segments;
+            }
+
+            // Case 5: Break fully encompasses work segment
+            if (breakStart <= workStart && breakEnd >= workEnd) {
+                return []; // No work segment left
+            }
+            
+            // Fallback for complex or unexpected overlaps (should ideally not happen with valid inputs)
+            console.warn("Unhandled break subtraction case:", {workStart, workEnd, breakStart, breakEnd});
+            return [[workStart, workEnd]]; // Return original if logic fails
+        }
+
+
+        /**
+         * Calculates the pay for a single row (day).
+         * @param {string} dayId - The unique ID of the day row.
+         */
+        function calculateRow(dayId) {
+            const startInput = document.getElementById(`start_${dayId}`);
+            const endInput = document.getElementById(`end_${dayId}`);
+            const breakInput = document.getElementById(`break_${dayId}`);
+            const breakStartInput = document.getElementById(`breakStart_${dayId}`);
+            const breakEndInput = document.getElementById(`breakEnd_${dayId}`);
+            const dateInput = document.getElementById(`date_${dayId}`);
+            const redDayCheckbox = document.getElementById(`redDay_${dayId}`);
+            const sickDayCheckbox = document.getElementById(`sickDay_${dayId}`); // NEW
+
+            let currentDayData = allDaysData[dayId];
+
+            // Reset error class
+            startInput.classList.remove('error');
+            endInput.classList.remove('error');
+
+            const basePay = parseFloat(document.getElementById('basePay').value) || 0;
+            const taxRate = parseFloat(document.getElementById('taxRate').value) / 100 || 0;
+            
+            // --- SICK DAY LOGIC ---
+            if (sickDayCheckbox.checked) {
+                // If it's a sick day, clear all time-related calculated fields
+                // The actual sick pay will be handled in calculateAll()
+                document.getElementById(`hours_${dayId}`).textContent = '0.0';
+                document.getElementById(`basePay_${dayId}`).textContent = '0 kr';
+                document.getElementById(`obPay_${dayId}`).textContent = '0 kr';
+                document.getElementById(`total_${dayId}`).textContent = '0 kr';
+                document.getElementById(`tax_${dayId}`).textContent = '0 kr';
+                document.getElementById(`net_${dayId}`).textContent = '0 kr';
+
+                // Update stored data for sick day
+                currentDayData.start = ''; // Clear times
+                currentDayData.end = '';
+                currentDayData.break = 0;
+                currentDayData.breakStart = '';
+                currentDayData.breakEnd = '';
+                currentDayData.redDay = false; // Red day is irrelevant for sick days
+                currentDayData.sickDay = true;
+                currentDayData.workHours = 0;
+                currentDayData.basePayAmount = 0;
+                currentDayData.obTotal = 0;
+                currentDayData.totalPay = 0;
+                currentDayData.taxAmount = 0;
+                currentDayData.netPay = 0;
+                currentDayData.obBreakdown = {};
+
+                saveData();
+                calculateAll(); // Recalculate totals including sick days
+                return; // Exit function early for sick days
+            }
+            // --- END SICK DAY LOGIC ---
+
+            const breakMinutes = parseInt(breakInput.value) || 0; // Ensure breakMinutes is a number
+            const breakStartMinutes = timeToMinutes(breakStartInput.value);
+            const breakEndMinutes = timeToMinutes(breakEndInput.value);
+
+            // Toggle disabled state of break inputs
+            toggleBreakInputs(dayId);
+
+            if (!startInput.value || !endInput.value || !dateInput.value) {
+                // Clear display if inputs are incomplete (and not a sick day)
+                document.getElementById(`hours_${dayId}`).textContent = '0.0';
+                document.getElementById(`basePay_${dayId}`).textContent = '0 kr';
+                document.getElementById(`obPay_${dayId}`).textContent = '0 kr';
+                document.getElementById(`total_${dayId}`).textContent = '0 kr';
+                document.getElementById(`tax_${dayId}`).textContent = '0 kr';
+                document.getElementById(`net_${dayId}`).textContent = '0 kr';
+                
+                // Update stored data (clear calculated fields)
+                currentDayData.start = startInput.value;
+                currentDayData.end = endInput.value;
+                currentDayData.break = breakMinutes;
+                currentDayData.breakStart = breakStartInput.value;
+                currentDayData.breakEnd = breakEndInput.value;
+                currentDayData.redDay = redDayCheckbox.checked;
+                currentDayData.sickDay = sickDayCheckbox.checked; // NEW
+                currentDayData.workHours = 0;
+                currentDayData.basePayAmount = 0;
+                currentDayData.obTotal = 0;
+                currentDayData.totalPay = 0;
+                currentDayData.taxAmount = 0;
+                currentDayData.netPay = 0;
+                currentDayData.obBreakdown = {};
+
+                saveData();
+                calculateAll(); // Update total summary
+                return;
+            }
+
+            const startMinutes = timeToMinutes(startInput.value);
+            let endMinutes = timeToMinutes(endInput.value);
+            const dateObj = new Date(dateInput.value + 'T00:00:00');
+            const isRedDay = redDayCheckbox.checked;
+            
+            let totalShiftMinutes = 0;
+            let overnightShift = false;
+
+            // Handle overnight shifts (end time is smaller than start time, means next day)
+            if (endMinutes <= startMinutes) {
+                totalShiftMinutes = (24 * 60 - startMinutes) + endMinutes;
+                overnightShift = true;
+            } else {
+                totalShiftMinutes = endMinutes - startMinutes;
+            }
+            
+            // Basic validation: If total shift minutes become negative or zero after valid times
+            if ((!overnightShift && endMinutes < startMinutes) || (totalShiftMinutes < 0 && (startInput.value && endInput.value))) {
+                startInput.classList.add('error');
+                endInput.classList.add('error');
+                document.getElementById(`hours_${dayId}`).textContent = 'Ogiltig tid!';
+                // Clear dependent fields
+                document.getElementById(`basePay_${dayId}`).textContent = '0 kr';
+                document.getElementById(`obPay_${dayId}`).textContent = '0 kr';
+                document.getElementById(`total_${dayId}`).textContent = '0 kr';
+                document.getElementById(`tax_${dayId}`).textContent = '0 kr';
+                document.getElementById(`net_${dayId}`).textContent = '0 kr';
+                
+                // Store incomplete data
+                currentDayData.start = startInput.value;
+                currentDayData.end = endInput.value;
+                currentDayData.break = breakMinutes;
+                currentDayData.breakStart = breakStartInput.value;
+                currentDayData.breakEnd = breakEndInput.value;
+                currentDayData.redDay = redDayCheckbox.checked;
+                currentDayData.sickDay = sickDayCheckbox.checked; // NEW
+                currentDayData.workHours = 0;
+                currentDayData.basePayAmount = 0;
+                currentDayData.obTotal = 0;
+                currentDayData.totalPay = 0;
+                currentDayData.taxAmount = 0;
+                currentDayData.netPay = 0;
+                currentDayData.obBreakdown = {};
+                saveData();
+                calculateAll();
+                return;
+            } else {
+                startInput.classList.remove('error');
+                endInput.classList.remove('error');
+            }
+
+            let effectiveWorkSegments = [];
+            let totalWorkMinutes = 0;
+
+            // Determine if break times are used
+            const useBreakTimes = (breakStartMinutes !== null && breakEndMinutes !== null);
+
+            if (useBreakTimes) {
+                // Validate break times
+                if (breakEndMinutes <= breakStartMinutes && !overnightShift) { // If break is overnight, but shift isn't
+                    breakStartInput.classList.add('error');
+                    breakEndInput.classList.add('error');
+                    document.getElementById(`hours_${dayId}`).textContent = 'Ogiltig rast!';
+                    // Clear dependent fields
+                    document.getElementById(`basePay_${dayId}`).textContent = '0 kr';
+                    document.getElementById(`obPay_${dayId}`).textContent = '0 kr';
+                    document.getElementById(`total_${dayId}`).textContent = '0 kr';
+                    document.getElementById(`tax_${dayId}`).textContent = '0 kr';
+                    document.getElementById(`net_${dayId}`).textContent = '0 kr';
+                    // Store incomplete data
+                    currentDayData.start = startInput.value;
+                    currentDayData.end = endInput.value;
+                    currentDayData.break = breakMinutes;
+                    currentDayData.breakStart = breakStartInput.value;
+                    currentDayData.breakEnd = breakEndInput.value;
+                    currentDayData.redDay = redDayCheckbox.checked;
+                    currentDayData.sickDay = sickDayCheckbox.checked; // NEW
+                    currentDayData.workHours = 0;
+                    currentDayData.basePayAmount = 0;
+                    currentDayData.obTotal = 0;
+                    currentDayData.totalPay = 0;
+                    currentDayData.taxAmount = 0;
+                    currentDayData.netPay = 0;
+                    currentDayData.obBreakdown = {};
+                    saveData();
+                    calculateAll();
+                    return;
+                } else {
+                    breakStartInput.classList.remove('error');
+                    breakEndInput.classList.remove('error');
+                }
+
+                // Create initial work segment(s)
+                let initialWorkSegments = [];
+                if (overnightShift) {
+                    // Split shift into two segments: before midnight and after midnight
+                    initialWorkSegments.push([startMinutes, 24 * 60]);
+                    initialWorkSegments.push([0, endMinutes]);
+                } else {
+                    initialWorkSegments.push([startMinutes, endMinutes]);
+                }
+
+                // Subtract break from each initial work segment
+                for (const [s, e] of initialWorkSegments) {
+                    const newSegments = subtractBreakFromWork(s, e, breakStartMinutes, breakEndMinutes);
+                    effectiveWorkSegments.push(...newSegments);
+                }
+
+                // Calculate total work minutes from effective segments
+                for (const [s, e] of effectiveWorkSegments) {
+                    totalWorkMinutes += (e - s);
+                }
+
+            } else {
+                // If break times are not used, simply subtract break minutes
+                totalWorkMinutes = totalShiftMinutes - breakMinutes;
+                if (totalWorkMinutes < 0) totalWorkMinutes = 0; // Ensure non-negative
+                effectiveWorkSegments = [[startMinutes, endMinutes]]; // For OB calculation, consider full period then deduct OB-free break
+            }
+            
+            if (totalWorkMinutes < 0) totalWorkMinutes = 0; // Ensure work minutes are not negative if break is too long
+            const workHours = minutesToHours(totalWorkMinutes);
+            
+            // Get rates from their respective storage locations (input for base/tax, localStorage for OB)
+            const eveningRate = parseFloat(localStorage.getItem('eveningRate') || '50') / 100;
+            const lateEveningRate = parseFloat(localStorage.getItem('lateEveningRate') || '70') / 100;
+            const saturdayRate = parseFloat(localStorage.getItem('saturdayRate') || '100') / 100;
+            const sundayRate = parseFloat(localStorage.getItem('sundayRate') || '100') / 100;
+            const holidayRate = parseFloat(localStorage.getItem('holidayRate') || '100') / 100;
+
+            // Calculate OB based on effective work segments
+            const ob = calculateOB(effectiveWorkSegments, dateObj, isRedDay);
+            
+            // Calculate pay
+            const basePayAmount = workHours * basePay;
+            const eveningPayAmount = minutesToHours(ob.evening) * basePay * eveningRate;
+            const lateEveningPayAmount = minutesToHours(ob.lateEvening) * basePay * lateEveningRate;
+            const saturdayPayAmount = minutesToHours(ob.saturday) * basePay * saturdayRate;
+            const sundayPayAmount = minutesToHours(ob.sunday) * basePay * sundayRate;
+            const holidayPayAmount = minutesToHours(ob.holiday) * basePay * holidayRate;
+            
+            const obTotal = eveningPayAmount + lateEveningPayAmount + saturdayPayAmount + sundayPayAmount + holidayPayAmount;
+            const totalPay = basePayAmount + obTotal;
+            const taxAmount = totalPay * taxRate;
+            const netPay = totalPay - taxAmount;
+
+            // Update display
+            document.getElementById(`hours_${dayId}`).textContent = workHours.toFixed(1);
+            document.getElementById(`basePay_${dayId}`).textContent = Math.round(basePayAmount) + ' kr';
+            document.getElementById(`obPay_${dayId}`).textContent = Math.round(obTotal) + ' kr';
+            document.getElementById(`total_${dayId}`).textContent = Math.round(totalPay) + ' kr';
+            document.getElementById(`tax_${dayId}`).textContent = Math.round(taxAmount) + ' kr';
+            document.getElementById(`net_${dayId}`).textContent = Math.round(netPay) + ' kr';
+
+            // Store data for this day
+            currentDayData.date = dateInput.value;
+            currentDayData.start = startInput.value;
+            currentDayData.end = endInput.value;
+            currentDayData.break = breakMinutes;
+            currentDayData.breakStart = breakStartInput.value;
+            currentDayData.breakEnd = breakEndInput.value;
+            currentDayData.redDay = redDayCheckbox.checked;
+            currentDayData.sickDay = sickDayCheckbox.checked; // NEW
+            currentDayData.workHours = workHours;
+            currentDayData.basePayAmount = basePayAmount;
+            currentDayData.obTotal = obTotal;
+            currentDayData.obBreakdown = ob; // Store breakdown for debugging/future display
+            currentDayData.totalPay = totalPay;
+            currentDayData.taxAmount = taxAmount;
+            currentDayData.netPay = netPay;
+
+            saveData();
+            calculateAll(); // Update total summary
+        }
+
+        /**
+         * Calculates and updates the total summary for all days based on the current filter,
+         * including sick days.
+         */
+        function calculateAll() {
+            let totalHours = 0;
+            let totalBasePay = 0;
+            let totalEveningPay = 0;
+            let totalLateEveningPay = 0;
+            let totalSaturdayPay = 0;
+            let totalSundayPay = 0;
+            let totalHolidayPay = 0;
+            let totalSickDaysCount = 0; // NEW: Track total sick days
+            let totalSickPayAmount = 0; // NEW: Track total sick pay
+
+            const taxRate = parseFloat(document.getElementById('taxRate').value) / 100 || 0;
+            const basePay = parseFloat(document.getElementById('basePay').value) || 0;
+            const averageWorkDayHours = 8; // Assuming a standard full-time day for sick pay calculation
+
+            // Get OB rates from direct localStorage items or set defaults
+            const eveningRate = parseFloat(localStorage.getItem('eveningRate') || '50') / 100;
+            const lateEveningRate = parseFloat(localStorage.getItem('lateEveningRate') || '70') / 100;
+            const saturdayRate = parseFloat(localStorage.getItem('saturdayRate') || '100') / 100;
+            const sundayRate = parseFloat(localStorage.getItem('sundayRate') || '100') / 100;
+            const holidayRate = parseFloat(localStorage.getItem('holidayRate') || '100') / 100;
+
+            // Filter data based on current view filter
+            const filteredDayIds = getFilteredDayIds(currentViewFilter).sort((idA, idB) => {
+                const dateA = new Date(allDaysData[idA].date + 'T00:00:00');
+                const dateB = new Date(allDaysData[idB].date + 'T00:00:00');
+                return dateA - dateB;
+            });
+
+            let consecutiveSickDays = 0; // Tracks consecutive sick days within the filtered period
+
+            // Iterate over *filtered* days to calculate summary
+            for (let i = 0; i < filteredDayIds.length; i++) {
+                const dayId = filteredDayIds[i];
+                const dayData = allDaysData[dayId];
+
+                if (!dayData) continue;
+
+                if (dayData.sickDay) {
+                    totalSickDaysCount++;
+
+                    // Check for consecutive sick days to apply karensdag
+                    // This is a simplified consecutive check within the filtered view.
+                    // For a robust system, you'd need to consider ALL days in allDaysData
+                    // and a more complex date-by-date consecutive check.
+                    const currentDate = new Date(dayData.date + 'T00:00:00');
+                    if (i > 0) {
+                        const prevDayId = filteredDayIds[i-1];
+                        const prevDate = new Date(allDaysData[prevDayId].date + 'T00:00:00');
+                        const diffTime = Math.abs(currentDate - prevDate);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        if (diffDays === 1 && allDaysData[prevDayId].sickDay) {
+                            consecutiveSickDays++;
+                        } else {
+                            consecutiveSickDays = 1; // Reset if not consecutive
+                        }
+                    } else {
+                        consecutiveSickDays = 1; // First day in filtered list
+                    }
+
+                    if (consecutiveSickDays > 1 && consecutiveSickDays <= 14) { // Day 2 to Day 14
+                        totalSickPayAmount += (basePay * averageWorkDayHours * 0.8); // 80% of 8 hours Grundlön
+                    }
+                    // Day 1 (consecutiveSickDays === 1) is karensdag, so no sick pay added.
+                    // Days > 14 are typically handled by Försäkringskassan, not employer.
+                    // This calculator only handles employer-paid sick pay (day 1-14).
+
+                } else {
+                    // Reset consecutive sick days if the current day is not a sick day
+                    consecutiveSickDays = 0;
+
+                    totalHours += dayData.workHours || 0;
+                    totalBasePay += dayData.basePayAmount || 0;
+                    
+                    if (dayData.obBreakdown) {
+                        totalEveningPay += minutesToHours(dayData.obBreakdown.evening || 0) * basePay * eveningRate;
+                        totalLateEveningPay += minutesToHours(dayData.obBreakdown.lateEvening || 0) * basePay * lateEveningRate;
+                        totalSaturdayPay += minutesToHours(dayData.obBreakdown.saturday || 0) * basePay * saturdayRate;
+                        totalSundayPay += minutesToHours(dayData.obBreakdown.sunday || 0) * basePay * sundayRate;
+                        totalHolidayPay += minutesToHours(dayData.obBreakdown.holiday || 0) * basePay * holidayRate;
+                    }
+                }
+            }
+
+
+            const grossTotal = totalBasePay + totalEveningPay + totalLateEveningPay + totalSaturdayPay + totalSundayPay + totalHolidayPay + totalSickPayAmount;
+            const totalTax = grossTotal * taxRate;
+            const netTotal = grossTotal - totalTax;
+
+            // Update summary display
+            document.getElementById('totalHours').textContent = totalHours.toFixed(1);
+            document.getElementById('totalBasePay').textContent = Math.round(totalBasePay) + ' kr';
+            document.getElementById('totalEveningPay').textContent = Math.round(totalEveningPay) + ' kr';
+            document.getElementById('totalLateEveningPay').textContent = Math.round(totalLateEveningPay) + ' kr';
+            document.getElementById('totalSaturdayPay').textContent = Math.round(totalSaturdayPay) + ' kr';
+            document.getElementById('totalSundayPay').textContent = Math.round(totalSundayPay) + ' kr';
+            document.getElementById('totalHolidayPay').textContent = Math.round(totalHolidayPay) + ' kr';
+            document.getElementById('totalSickDays').textContent = totalSickDaysCount; // NEW
+            document.getElementById('totalSickPay').textContent = Math.round(totalSickPayAmount) + ' kr'; // NEW
+            document.getElementById('grandTotal').textContent = Math.round(grossTotal) + ' kr';
+            document.getElementById('taxRateDisplay').textContent = (taxRate * 100).toFixed(1);
+            document.getElementById('totalTax').textContent = Math.round(totalTax) + ' kr';
+            document.getElementById('netTotal').textContent = Math.round(netTotal) + ' kr';
+        }
+
+        /**
+         * Removes a day row from the UI and its data.
+         * @param {string} dayIdToRemove - The unique ID of the day to remove.
+         */
+        function removeDay(dayIdToRemove) {
+            // Remove from UI first
+            const rowToRemove = document.getElementById(`row_${dayIdToRemove}`);
+            if (rowToRemove) {
+                rowToRemove.remove();
+            }
+            // Then remove from allDaysData
+            delete allDaysData[dayIdToRemove]; 
+            
+            filterAndDisplayDays(); // Re-render visible days and recalculate
+            saveData(); // Save updated data
+        }
+
+        // --- Period View Functions (Updated for dropdown) ---
+
+        /**
+         * Handles change in the period selection dropdown.
+         */
+        function handlePeriodChange() {
+            const periodSelect = document.getElementById('periodSelect');
+            currentViewFilter = periodSelect.value;
+            const customPeriodInputs = document.getElementById('customPeriodInputs');
+
+            if (currentViewFilter === 'custom') {
+                customPeriodInputs.classList.remove('hidden');
+                // Pre-fill custom dates if previously set, or with a default range (e.g., last 30 days)
+                if (!document.getElementById('customStartDate').value || !document.getElementById('customEndDate').value) {
+                    const today = new Date();
+                    const thirtyDaysAgo = new Date();
+                    thirtyDaysAgo.setDate(today.getDate() - 29); // Last 30 days including today
+                    document.getElementById('customStartDate').value = formatDateToISO(thirtyDaysAgo);
+                    document.getElementById('customEndDate').value = formatDateToISO(today);
+                }
+            } else {
+                customPeriodInputs.classList.add('hidden');
+                // Apply the selected predefined period directly
+                applyPredefinedPeriod();
+            }
+        }
+
+        /**
+         * Applies the selected predefined period filter (all, currentMonth, lastMonth).
+         */
+        function applyPredefinedPeriod() {
+            filterAndDisplayDays();
+            saveData(); // Save the new filter state if desired (optional, but good for persistence)
+        }
+
+        /**
+         * Applies the custom period filter.
+         */
+        function applyCustomPeriod() {
+            const startDate = document.getElementById('customStartDate').value;
+            const endDate = document.getElementById('customEndDate').value;
+
+            if (!startDate || !endDate) {
+                alert('Vänligen välj både start- och slutdatum för den anpassade perioden.');
+                return;
+            }
+            filterAndDisplayDays();
+            saveData(); // Save custom dates if desired
+        }
+
+        /**
+         * Filters the days in allDaysData based on the currentViewFilter
+         * and returns an array of day IDs that should be visible.
+         */
+        function getFilteredDayIds(filterType) {
+            const filteredIds = [];
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth(); // 0-indexed
+
+            for (const dayId in allDaysData) {
+                const dayData = allDaysData[dayId];
+                if (!dayData.date) continue;
+
+                const dayDate = new Date(dayData.date + 'T00:00:00'); // Ensure date object for comparison
+
+                let isVisible = false;
+                switch (filterType) {
+                    case 'all':
+                        isVisible = true;
+                        break;
+                    case 'currentMonth':
+                        isVisible = dayDate.getFullYear() === currentYear && dayDate.getMonth() === currentMonth;
+                        break;
+                    case 'lastMonth':
+                        const lastMonthDate = new Date(currentYear, currentMonth - 1, 1);
+                        isVisible = dayDate.getFullYear() === lastMonthDate.getFullYear() && dayDate.getMonth() === lastMonthDate.getMonth();
+                        break;
+                    case 'custom':
+                        const customStartDateStr = document.getElementById('customStartDate').value;
+                        const customEndDateStr = document.getElementById('customEndDate').value;
+                        if (customStartDateStr && customEndDateStr) {
+                            const customStartDate = new Date(customStartDateStr + 'T00:00:00');
+                            const customEndDate = new Date(customEndDateStr + 'T00:00:00');
+                            isVisible = dayDate >= customStartDate && dayDate <= customEndDate;
+                        } else {
+                            isVisible = false; // If custom dates not set, hide all
+                        }
+                        break;
+                    default:
+                        isVisible = true; // Fallback to 'all'
+                }
+                if (isVisible) {
+                    filteredIds.push(dayId);
+                }
+            }
+            return filteredIds;
+        }
+
+        /**
+         * Renders only the filtered days to the table and updates the summary.
+         */
+        function filterAndDisplayDays() {
+            const tableBody = document.querySelector('#timeReportTable tbody');
+            tableBody.innerHTML = ''; // Clear current UI
+
+            // Get filtered and sorted day IDs
+            const filteredDayIds = getFilteredDayIds(currentViewFilter).sort((idA, idB) => {
+                const dateA = new Date(allDaysData[idA].date + 'T00:00:00');
+                const dateB = new Date(allDaysData[idB].date + 'T00:00:00');
+                return dateA - dateB;
+            });
+
+            filteredDayIds.forEach(dayId => {
+                const dayData = allDaysData[dayId];
+                if (!dayData || !dayData.date) return; // Skip invalid data
+
+                const dateObj = new Date(dayData.date + 'T00:00:00');
+                const dayName = new Intl.DateTimeFormat('sv-SE', { weekday: 'long' }).format(dateObj);
+                const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+
+                const newRow = tableBody.insertRow();
+                newRow.id = `row_${dayId}`;
+
+                // Apply styling based on priority: Sickness > Red Day > Weekend
+                if (dayData.sickDay) {
+                    newRow.classList.add('sickness-day');
+                } else if (dayData.redDay) {
+                    newRow.classList.add('red-day');
+                } else if (isWeekend) {
+                    newRow.classList.add('weekend');
+                }
+
+                newRow.innerHTML = `
+                    <td><input type="date" class="input-field" id="date_${dayId}" value="${dayData.date}" onchange="updateDayData('${dayId}');"></td>
+                    <td id="dayName_${dayId}">${dayName}</td>
+                    <td><input type="checkbox" class="checkbox-field" id="redDay_${dayId}" ${dayData.redDay ? 'checked' : ''} ${dayData.sickDay ? 'disabled' : ''} onchange="updateRedDay('${dayId}');"></td>
+                    <td><input type="checkbox" class="checkbox-field" id="sickDay_${dayId}" ${dayData.sickDay ? 'checked' : ''} onchange="updateSickDay('${dayId}');"></td>
+                    <td><input type="time" class="input-field" id="start_${dayId}" value="${dayData.start || ''}" ${dayData.sickDay ? 'disabled' : ''} onchange="calculateRow('${dayId}');"></td>
+                    <td><input type="time" class="input-field" id="end_${dayId}" value="${dayData.end || ''}" ${dayData.sickDay ? 'disabled' : ''} onchange="calculateRow('${dayId}');"></td>
+                    <td><input type="time" class="input-field" id="breakStart_${dayId}" value="${dayData.breakStart || ''}" ${dayData.sickDay ? 'disabled' : ''} onchange="handleBreakTimeChange('${dayId}');"></td>
+                    <td><input type="time" class="input-field" id="breakEnd_${dayId}" value="${dayData.breakEnd || ''}" ${dayData.sickDay ? 'disabled' : ''} onchange="handleBreakTimeChange('${dayId}');"></td>
+                    <td><input type="number" class="input-field" id="break_${dayId}" value="${dayData.break || '0'}" min="0" ${dayData.sickDay ? 'disabled' : ''} oninput="handleBreakMinutesChange('${dayId}');"></td>
+                    <td id="hours_${dayId}">${(dayData.workHours || 0).toFixed(1)}</td>
+                    <td id="basePay_${dayId}">${Math.round(dayData.basePayAmount || 0)} kr</td>
+                    <td id="obPay_${dayId}">${Math.round(dayData.obTotal || 0)} kr</td>
+                    <td id="total_${dayId}">${Math.round(dayData.totalPay || 0)} kr</td>
+                    <td id="tax_${dayId}">${Math.round(dayData.taxAmount || 0)} kr</td>
+                    <td id="net_${dayId}">${Math.round(dayData.netPay || 0)} kr</td>
+                    <td><button class="remove-day-btn" onclick="removeDay('${dayId}')">X</button></td>
+                `;
+                toggleBreakInputs(dayId); // Ensure break inputs are correctly enabled/disabled
+            });
+            calculateAll(); // Recalculate summary based ONLY on visible rows
+        }
+
+
+        // --- Data Persistence (localStorage) ---
+
+        /**
+         * Saves all current data (settings and daily data) to localStorage.
+         */
+        function saveData() {
+            if (localStorageConsentGiven !== true) {
+                console.log('Local storage consent not given. Data not saved.');
+                return;
+            }
+            try {
+                const dataToSave = {
+                    settings: {
+                        basePay: document.getElementById('basePay').value,
+                        taxRate: document.getElementById('taxRate').value,
+                        // Removed monthBasedPeriod, periodStartDay, periodEndDay as they are replaced by periodSelect
+                        currentViewFilter: currentViewFilter, // Save current filter
+                        customStartDate: document.getElementById('customStartDate').value, // Save custom dates
+                        customEndDate: document.getElementById('customEndDate').value
+                    },
+                    allDaysData: allDaysData,
+                    dayCounter: dayCounter
+                };
+                localStorage.setItem('tidrapportData', JSON.stringify(dataToSave));
+                console.log('Data saved to localStorage!');
+            } catch (e) {
+                console.error("Error saving to localStorage:", e);
+                alert("Kunde inte spara data lokalt. Din webbläsares lagringsutrymme kan vara fullt, eller så har du blockerat lokal lagring.");
+            }
+        }
+
+        /**
+         * Loads data from localStorage and populates the form.
+         */
+        function loadData() {
+            if (localStorageConsentGiven !== true) {
+                console.log('Local storage consent not given. Cannot load data.');
+                return;
+            }
+            const savedData = localStorage.getItem('tidrapportData');
+            if (savedData) {
+                try {
+                    const parsedData = JSON.parse(savedData);
+
+                    // Load main settings
+                    document.getElementById('basePay').value = parsedData.settings.basePay || '162.98';
+                    document.getElementById('taxRate').value = parsedData.settings.taxRate || '30';
+                    
+                    // Load period view settings
+                    currentViewFilter = parsedData.settings.currentViewFilter || 'all';
+                    document.getElementById('periodSelect').value = currentViewFilter;
+                    document.getElementById('customStartDate').value = parsedData.settings.customStartDate || '';
+                    document.getElementById('customEndDate').value = parsedData.settings.customEndDate || '';
+                    handlePeriodChange(); // Apply the loaded filter
+
+                    // Load OB rates from direct localStorage items or set defaults
+                    if (localStorage.getItem('eveningRate') === null) localStorage.setItem('eveningRate', '50');
+                    if (localStorage.getItem('lateEveningRate') === null) localStorage.setItem('lateEveningRate', '70');
+                    if (localStorage.getItem('saturdayRate') === null) localStorage.setItem('saturdayRate', '100');
+                    if (localStorage.getItem('sundayRate') === null) localStorage.setItem('sundayRate', '100');
+                    if (localStorage.getItem('holidayRate') === null) localStorage.setItem('holidayRate', '100');
+
+
+                    // Re-add days and populate data
+                    dayCounter = parsedData.dayCounter || 0; // Use saved dayCounter for new IDs
+                    allDaysData = parsedData.allDaysData || {}; // Load allDaysData
+
+                    // Ensure 'sickDay' property exists for older saved data
+                    for (const dayId in allDaysData) {
+                        if (allDaysData[dayId].sickDay === undefined) {
+                            allDaysData[dayId].sickDay = false;
+                        }
+                    }
+
+                    // Instead of directly rendering all, call filterAndDisplayDays
+                    filterAndDisplayDays();
+                    console.log('Data loaded from localStorage!');
+                } catch (e) {
+                    console.error("Error loading from localStorage, data might be corrupted:", e);
+                    alert("Kunde inte ladda tidigare sparad data. Den kan vara skadad och rensas.");
+                    clearAllData(true); // Clear corrupted data silently
+                    addDay(null, true); // Add a single blank day to start working
+                    filterAndDisplayDays(); // Display the new blank day
+                }
+            } else {
+                // If no saved data, add an initial day
+                addDay(null, true); // Add a single blank day, don't save immediately.
+                filterAndDisplayDays(); // Display the new blank day
+            }
+        }
+
+        /**
+         * Clears all saved data from localStorage and resets the application state.
+         * @param {boolean} [silent=false] - If true, no confirmation dialog is shown.
+         */
+        function clearAllData(silent = false) {
+            if (silent || confirm('Är du säker på att du vill rensa all sparad data? Detta kan inte ångras!')) {
+                localStorage.removeItem('tidrapportData');
+                // Also clear OB rates
+                localStorage.removeItem('eveningRate');
+                localStorage.removeItem('lateEveningRate');
+                localStorage.removeItem('saturdayRate');
+                localStorage.removeItem('sundayRate');
+                localStorage.removeItem('holidayRate');
+
+                allDaysData = {};
+                dayCounter = 0; // Reset dayCounter
+                
+                // Reset settings to default values
+                document.getElementById('basePay').value = "162.98";
+                document.getElementById('taxRate').value = "30";
+                document.getElementById('periodSelect').value = "all"; // Reset dropdown
+                document.getElementById('customStartDate').value = "";
+                document.getElementById('customEndDate').value = "";
+                document.getElementById('customPeriodInputs').classList.add('hidden'); // Hide custom inputs
+                
+                currentViewFilter = 'all'; // Reset filter state
+
+                calculateAll(); // Recalculate totals (should be zero)
+                console.log('All data cleared!');
+                if (!silent) { // Only update status if not a silent clear (e.g. from decline button)
+                    localStorage.removeItem('localStorageConsentGiven'); // Also clear consent
+                    localStorageConsentGiven = null; // Set to null to re-trigger popup
+                    updateStorageStatus();
+                    showConsentPopup(); // Show popup again if data cleared by user
+                }
+                // After clearing, if no days are present, add a single blank day
+                if (Object.keys(allDaysData).length === 0) {
+                    addDay(null, true); // Add a single blank day, don't save immediately
+                }
+                filterAndDisplayDays(); // Ensure UI reflects the cleared state
+            }
+        }
+
+        // --- Export Functionality ---
+
+        /**
+         * Exports all data to a CSV file.
+         */
+        function exportToCsv() {
+            // Updated header with "Sjukdag"
+            let csv = 'Datum,Dag,Röd dag,Sjukdag,Starttid,Sluttid,Rast Start,Rast Slut,Rast (min),Arbetstid (timmar),Grundlön (kr),OB-tillägg (kr),Bruttolön (kr),Skatt (kr),Nettolön (kr)\n';
+            
+            // Sort days by date for chronological order in CSV
+            const sortedDayIds = Object.keys(allDaysData).sort((idA, idB) => {
+                const dateA = new Date(allDaysData[idA].date + 'T00:00:00');
+                const dateB = new Date(allDaysData[idB].date + 'T00:00:00');
+                return dateA - dateB;
+            });
+
+            // Re-calculate all to ensure sick pay is correctly accounted for in the full summary
+            // (This is primarily to get accurate `allGrandTotal` etc. based on full dataset, not just filtered)
+            const basePay = parseFloat(document.getElementById('basePay').value) || 0;
+            const taxRate = parseFloat(document.getElementById('taxRate').value) / 100 || 0;
+            const averageWorkDayHours = 8;
+            const eveningRate = parseFloat(localStorage.getItem('eveningRate') || '50') / 100;
+            const lateEveningRate = parseFloat(localStorage.getItem('lateEveningRate') || '70') / 100;
+            const saturdayRate = parseFloat(localStorage.getItem('saturdayRate') || '100') / 100;
+            const sundayRate = parseFloat(localStorage.getItem('sundayRate') || '100') / 100;
+            const holidayRate = parseFloat(localStorage.getItem('holidayRate') || '100') / 100;
+
+            let allTotalHours = 0;
+            let allGrandTotal = 0;
+            let allTotalTax = 0;
+            let allNetTotal = 0;
+            let allTotalSickDaysCount = 0;
+            let allTotalSickPayAmount = 0;
+
+            let exportConsecutiveSickDays = 0; // For full export calculation
+
+            for (let i = 0; i < sortedDayIds.length; i++) {
+                const dayId = sortedDayIds[i];
+                const dayData = allDaysData[dayId];
+                if (!dayData || !dayData.date) continue; // Skip invalid data
+
+                const redDay = dayData.redDay ? 'Ja' : 'Nej';
+                const sickDay = dayData.sickDay ? 'Ja' : 'Nej'; // NEW
+                const dateObj = new Date(dayData.date + 'T00:00:00');
+                const dayName = new Intl.DateTimeFormat('sv-SE', { weekday: 'long' }).format(dateObj);
+                
+                let currentDayGross = 0;
+                let currentDayWorkHours = 0;
+                let currentDayBasePay = 0;
+                let currentDayObTotal = 0;
+                let currentDayTax = 0;
+                let currentDayNet = 0;
+
+                if (dayData.sickDay) {
+                    allTotalSickDaysCount++;
+                    // Recalculate sick pay based on full ordered dataset
+                    if (i > 0) {
+                        const prevDayId = sortedDayIds[i-1];
+                        const prevDate = new Date(allDaysData[prevDayId].date + 'T00:00:00');
+                        const diffTime = Math.abs(dateObj - prevDate);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        if (diffDays === 1 && allDaysData[prevDayId].sickDay) {
+                            exportConsecutiveSickDays++;
+                        } else {
+                            exportConsecutiveSickDays = 1;
+                        }
+                    } else {
+                        exportConsecutiveSickDays = 1;
+                    }
+
+                    if (exportConsecutiveSickDays > 1 && exportConsecutiveSickDays <= 14) {
+                        currentDayGross = (basePay * averageWorkDayHours * 0.8);
+                        allTotalSickPayAmount += currentDayGross; // Add to total sick pay
+                    }
+                    // For sick days, other amounts are 0 for the CSV row
+                    currentDayWorkHours = 0;
+                    currentDayBasePay = 0;
+                    currentDayObTotal = 0;
+                    currentDayTax = currentDayGross * taxRate; // Tax on sick pay
+                    currentDayNet = currentDayGross - currentDayTax;
+
+                } else {
+                    exportConsecutiveSickDays = 0; // Reset for non-sick days
+
+                    currentDayWorkHours = dayData.workHours || 0;
+                    currentDayBasePay = dayData.basePayAmount || 0;
+                    currentDayObTotal = dayData.obTotal || 0;
+                    currentDayGross = dayData.totalPay || 0;
+                    currentDayTax = dayData.taxAmount || 0;
+                    currentDayNet = dayData.netPay || 0;
+
+                    allTotalHours += currentDayWorkHours; // Add to overall totals
+                }
+                
+                csv += `${dayData.date},${dayName},${redDay},${sickDay},${dayData.start || ''},${dayData.end || ''},${dayData.breakStart || ''},${dayData.breakEnd || ''},${dayData.break || '0'},${currentDayWorkHours.toFixed(1)},${Math.round(currentDayBasePay)},${Math.round(currentDayObTotal)},${Math.round(currentDayGross)},${Math.round(currentDayTax)},${Math.round(currentDayNet)}\n`;
+            }
+
+            // Calculate final overall summary (for the summary row in CSV)
+            allGrandTotal = 0;
+            allTotalTax = 0;
+            allNetTotal = 0;
+
+            let finalConsecutiveSickDays = 0;
+            for (let i = 0; i < sortedDayIds.length; i++) {
+                const dayId = sortedDayIds[i];
+                const dayData = allDaysData[dayId];
+                if (!dayData) continue;
+
+                if (dayData.sickDay) {
+                     const currentDate = new Date(dayData.date + 'T00:00:00');
+                    if (i > 0) {
+                        const prevDayId = sortedDayIds[i-1];
+                        const prevDate = new Date(allDaysData[prevDayId].date + 'T00:00:00');
+                        const diffTime = Math.abs(currentDate - prevDate);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        if (diffDays === 1 && allDaysData[prevDayId].sickDay) {
+                            finalConsecutiveSickDays++;
+                        } else {
+                            finalConsecutiveSickDays = 1;
+                        }
+                    } else {
+                        finalConsecutiveSickDays = 1;
+                    }
+
+                    if (finalConsecutiveSickDays > 1 && finalConsecutiveSickDays <= 14) {
+                        allGrandTotal += (basePay * averageWorkDayHours * 0.8);
+                    }
+                } else {
+                    finalConsecutiveSickDays = 0;
+                    allGrandTotal += dayData.totalPay || 0; // Add regular pay
+                }
+            }
+            allTotalTax = allGrandTotal * taxRate;
+            allNetTotal = allGrandTotal - allTotalTax;
+
+            csv += `\nSummering (Alla rader),,,,,,,,,${allTotalHours.toFixed(1)},,,,${Math.round(allGrandTotal)},${Math.round(allTotalTax)},${Math.round(allNetTotal)}\n`;
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tidrapport.csv';
+            document.body.appendChild(a); // Append to body is good practice
+            a.click();
+            document.body.removeChild(a); // Clean up
+            window.URL.revokeObjectURL(url);
+            console.log('Data exported to CSV!');
+        }
+
+        // --- Import Functionality ---
+        function loadFromCsv(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                processCsvData(text);
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Clear the file input
+        }
+
+        function processCsvData(csvText) {
+            const lines = csvText.split('\n');
+            if (lines.length <= 1) { // Only header or empty
+                alert('Den valda CSV-filen verkar vara tom eller saknar data.');
+                return;
+            }
+
+            // Clear current data before loading new
+            clearAllData(true); // Silent clear
+            allDaysData = {}; // Reset global data object
+            dayCounter = 0; // Reset counter for new IDs
+            const tableBody = document.querySelector('#timeReportTable tbody');
+            tableBody.innerHTML = ''; // Clear UI
+
+            // Skip header row
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue; // Skip empty lines
+
+                // Stop if we hit the summary section
+                if (line.startsWith('Summering')) {
+                    break;
+                }
+
+                // Split by comma, but be careful with commas inside quoted strings if any (though not expected in our export)
+                const parts = line.split(',');
+
+                // Check for expected number of columns for the new format (now 9 for all relevant inputs)
+                if (parts.length < 9) { 
+                    console.warn(`Skipping malformed CSV row (too few columns): ${line}`);
+                    continue;
+                }
+
+                const date = parts[0] ? parts[0].trim() : '';
+                const redDay = parts[2] ? parts[2].trim().toLowerCase() === 'ja' : false;
+                const sickDay = parts[3] ? parts[3].trim().toLowerCase() === 'ja' : false; // NEW INDEX
+                const start = parts[4] ? parts[4].trim() : ''; // NEW INDEX
+                const end = parts[5] ? parts[5].trim() : '';     // NEW INDEX
+                const breakStart = parts[6] ? parts[6].trim() : ''; // NEW INDEX
+                const breakEnd = parts[7] ? parts[7].trim() : '';     // NEW INDEX
+                const breakMinutes = parseInt(parts[8] ? parts[8].trim() : '0') || 0; // NEW INDEX
+
+                // Generate a new unique ID for the imported day
+                const newDayId = `day_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+                dayCounter++; // Increment global counter
+
+                allDaysData[newDayId] = {
+                    date: date,
+                    start: start,
+                    end: end,
+                    break: breakMinutes,
+                    breakStart: breakStart,
+                    breakEnd: breakEnd,
+                    redDay: redDay,
+                    sickDay: sickDay, // NEW
+                    workHours: 0, // Will be calculated
+                    basePayAmount: 0, // Will be calculated
+                    obTotal: 0, // Will be calculated
+                    obBreakdown: {}, // Will be calculated
+                    totalPay: 0, // Will be calculated
+                    taxAmount: 0, // Will be calculated
+                    netPay: 0 // Will be calculated
+                };
+
+                // Add row to UI, calculate values, and save
+                const dateObj = new Date(date + 'T00:00:00');
+                const dayName = new Intl.DateTimeFormat('sv-SE', { weekday: 'long' }).format(dateObj);
+                const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+
+                const newRow = tableBody.insertRow();
+                newRow.id = `row_${newDayId}`;
+
+                // Styling logic
+                if (sickDay) {
+                    newRow.classList.add('sickness-day');
+                } else if (redDay) {
+                    newRow.classList.add('red-day');
+                } else if (isWeekend) {
+                    newRow.classList.add('weekend');
+                }
+
+                // Disable time inputs if it's a sick day
+                const disableTimeInputs = sickDay ? 'disabled' : '';
+                const disableRedDayCheckbox = sickDay ? 'disabled' : '';
+
+
+                newRow.innerHTML = `
+                    <td><input type="date" class="input-field" id="date_${newDayId}" value="${date}" onchange="updateDayData('${newDayId}');"></td>
+                    <td id="dayName_${newDayId}">${dayName}</td>
+                    <td><input type="checkbox" class="checkbox-field" id="redDay_${newDayId}" ${redDay ? 'checked' : ''} ${disableRedDayCheckbox} onchange="updateRedDay('${newDayId}');"></td>
+                    <td><input type="checkbox" class="checkbox-field" id="sickDay_${newDayId}" ${sickDay ? 'checked' : ''} onchange="updateSickDay('${newDayId}');"></td>
+                    <td><input type="time" class="input-field" id="start_${newDayId}" value="${start}" ${disableTimeInputs} onchange="calculateRow('${newDayId}');"></td>
+                    <td><input type="time" class="input-field" id="end_${newDayId}" value="${end}" ${disableTimeInputs} onchange="calculateRow('${newDayId}');"></td>
+                    <td><input type="time" class="input-field" id="breakStart_${newDayId}" value="${breakStart}" ${disableTimeInputs} onchange="handleBreakTimeChange('${newDayId}');"></td>
+                    <td><input type="time" class="input-field" id="breakEnd_${newDayId}" value="${breakEnd}" ${disableTimeInputs} onchange="handleBreakTimeChange('${newDayId}');"></td>
+                    <td><input type="number" class="input-field" id="break_${newDayId}" value="${breakMinutes}" min="0" ${disableTimeInputs} oninput="handleBreakMinutesChange('${newDayId}');"></td>
+                    <td id="hours_${newDayId}">0.0</td>
+                    <td id="basePay_${newDayId}">0 kr</td>
+                    <td id="obPay_${newDayId}">0 kr</td>
+                    <td id="total_${newDayId}">0 kr</td>
+                    <td id="tax_${dayId}">0 kr</td>
+                    <td id="net_${dayId}">0 kr</td>
+                    <td><button class="remove-day-btn" onclick="removeDay('${newDayId}')">X</button></td>
+                `;
+                toggleBreakInputs(newDayId); // Ensure break inputs are correctly enabled/disabled
+                calculateRow(newDayId); // Trigger calculation for each row to populate computed fields
+            }
+            filterAndDisplayDays(); // Re-render table with loaded data
+            saveData(); // Save the newly loaded data if consent is true
+            alert('Tidrapporten har laddats från CSV-filen!');
+        }
+
+
+        // --- Event Listeners and Initial Setup ---
+
+        // Add event listeners to main settings inputs to trigger recalculation and saving
+        document.getElementById('basePay').addEventListener('input', () => { calculateAll(); saveData(); });
+        document.getElementById('taxRate').addEventListener('input', () => { calculateAll(); saveData(); });
+
+
+        // Initial setup
+        document.addEventListener('DOMContentLoaded', () => {
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // Check for existing consent
+            const consent = localStorage.getItem('localStorageConsentGiven');
+            if (consent === 'true') {
+                localStorageConsentGiven = true;
+                loadData(); // Load any previously saved data
+                // If loadData didn't load any days (e.g., first time loading after consent, but no data saved yet), add one blank day.
+                if (Object.keys(allDaysData).length === 0) {
+                    addDay(null, true); // Add a single blank day, don't save immediately
+                }
+            } else if (consent === 'false') {
+                localStorageConsentGiven = false;
+                // If user previously declined, start fresh without loading data
+                // Ensure a blank day is added so user can start immediately
+                if (Object.keys(allDaysData).length === 0) {
+                    addDay(null, true); // Add a single blank day, don't save immediately
+                }
+            } else {
+                // First visit or localStorage cleared, show popup
+                showConsentPopup();
+                // Add a blank day even before consent if no data exists, so user can interact
+                if (Object.keys(allDaysData).length === 0) {
+                    addDay(null, true); // Add a single blank day, don't save immediately
+                }
+            }
+            updateStorageStatus(); // Display initial status
+
+            // Automatically select "Denna månaden" if no specific filter was loaded or set
+            // And ensure it's not a custom period which needs manual "Visa" click
+            if (currentViewFilter === 'all' || currentViewFilter === null || currentViewFilter === '') {
+                document.getElementById('periodSelect').value = 'currentMonth';
+                currentViewFilter = 'currentMonth'; // Update the internal state immediately
+            }
+
+            filterAndDisplayDays(); // Initial display based on loaded filter (or default 'currentMonth')
+        });
+    </script>
+</body>
+</html>
