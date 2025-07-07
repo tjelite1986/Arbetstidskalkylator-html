@@ -2,1243 +2,796 @@
 <html lang="sv">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Timesheet Calculator - Handel Sverige</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            display: flex;
-            min-height: 100vh;
-            background-color: #f5f5f5;
-            color: #333;
-            flex-direction: column;
-        }
-
-        .topbar {
-            width: 100%;
-            background-color: #333;
-            color: white;
-            padding: 10px 0;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            flex-shrink: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 60px;
-            box-sizing: border-box;
-        }
-
-        .topbar h2 {
-            display: none;
-        }
-
-        .topbar ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            gap: 20px;
-        }
-
-        .topbar ul li {
-            margin-bottom: 0;
-        }
-
-        .topbar ul li a {
-            color: white;
-            text-decoration: none;
-            display: block;
-            padding: 10px 15px;
-            border-radius: 4px;
-            transition: background-color 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .topbar ul li a:hover {
-            background-color: #575757;
-        }
-
-        .main-content {
-            flex-grow: 1;
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        /* Inställningssektioner */
-        .settings-section {
-            background: #ecf0f1;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-
-        .settings-row {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 10px;
-            align-items: center;
-        }
-
-        .settings-row label {
-            min-width: 180px;
-            font-weight: bold;
-        }
-
-        .settings-row input {
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            width: 100px; /* Standardbredd */
-            box-sizing: border-box; /* Se till att padding inte ökar bredden */
-        }
-
-        /* Specifik stil för month input för bättre utseende */
-        .settings-row input[type="month"] {
-            width: 150px; /* Bredare för att visa år och månad */
-            padding: 6px;
-        }
-        
-        .settings-row select {
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            width: 150px; /* Eller anpassa efter önskemål */
-            box-sizing: border-box;
-            height: 30px; /* Matchar input-höjden bättre */
-        }
-
-        /* Tabellstilar */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 6px;
-            text-align: center;
-        }
-
-        th {
-            background-color: #3498db;
-            color: white;
-            font-weight: bold;
-            font-size: 12px;
-        }
-
-        tbody tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        .input-field {
-            width: 100%;
-            padding: 3px;
-            border: none;
-            background: transparent;
-            text-align: center;
-            font-size: 12px;
-        }
-
-        .input-field[type="date"] {
-            width: 120px;
-            box-sizing: border-box;
-        }
-
-        /* Nytt: Styling för timlön per pass */
-        .input-field.hourly-rate-override {
-            width: 80px; /* Mindre bredd för timlön per pass */
-        }
-
-        /* Nytt: Styling för kommentarer */
-        .input-field.comments-field {
-            width: 150px; /* Bredare för kommentarer */
-            text-align: left; /* Texten justeras till vänster */
-        }
-
-        .checkbox-field {
-            width: auto;
-            margin: 0;
-        }
-
-        #timesheetBody tr.weekend {
-            background-color: #fff3cd;
-        }
-        #timesheetBody tr.red-day {
-            background-color: #ffebee;
-        }
-
-        /* Sammanfattningsstilar */
-        .summary {
-            background: #e8f5e8;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 20px;
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        .total {
-            font-size: 1.2em;
-            color: #27ae60;
-            border-top: 2px solid #27ae60;
-            padding-top: 10px;
-            margin-top: 10px;
-        }
-
-        .tax-section {
-            background: #fff3e0;
-            border-left: 4px solid #ff9800;
-            margin-top: 10px;
-            padding-top: 10px;
-        }
-
-        /* OB-förklaring */
-        .ob-legend {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-
-        .ob-legend h3 {
-            margin-top: 0;
-            color: #495057;
-        }
-
-        /* Knappstilar */
-        .btn {
-            background: #3498db;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 5px;
-            transition: background-color 0.3s ease;
-        }
-
-        .btn:hover {
-            background: #2980b9;
-        }
-
-        .delete-row-btn {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            padding: 5px 8px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 0.8em;
-            transition: background-color 0.3s ease;
-        }
-
-        .delete-row-btn:hover {
-            background-color: #c0392b;
-        }
-
-        /* Footer Styles */
-        .footer {
-            background-color: #333;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            font-size: 0.9em;
-            margin-top: auto;
-            flex-shrink: 0;
-        }
-
-        .footer p {
-            margin: 5px 0;
-        }
-
-        .footer a {
-            color: #007bff;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .footer a:hover {
-            color: #66b3ff;
-        }
-
-        /* Media queries for responsiveness */
-        @media (max-width: 768px) {
-            .topbar {
-                height: auto;
-                padding: 10px 0;
-            }
-            .topbar ul {
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 10px;
-            }
-            .topbar ul li a {
-                padding: 8px 12px;
-                font-size: 0.9em;
-            }
-
-            .main-content {
-                padding: 15px;
-            }
-            .container.calculator-wrapper {
-                width: 100%;
-                box-sizing: border-box;
-                padding: 15px;
-            }
-            h1 {
-                font-size: 1.5em;
-                margin-bottom: 20px;
-            }
-            .ob-legend {
-                padding: 10px;
-            }
-            .ob-legend ul {
-                padding-left: 20px;
-            }
-            .settings-row {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-            .settings-row label {
-                min-width: unset;
-                width: 100%;
-                font-size: 0.9em;
-            }
-            .settings-row input {
-                width: calc(100% - 10px);
-                box-sizing: border-box;
-            }
-            .settings-row input[type="month"],
-            .settings-row input[type="date"],
-            .settings-row select {
-                width: calc(100% - 10px); /* Anpassa bredden för mobil */
-            }
-
-            table {
-                display: block;
-                overflow-x: auto;
-                white-space: nowrap;
-                -webkit-overflow-scrolling: touch;
-            }
-            th, td {
-                font-size: 10px;
-                padding: 4px;
-            }
-            .input-field {
-                font-size: 10px;
-            }
-            .input-field[type="date"] {
-                width: 100px;
-            }
-            .input-field.hourly-rate-override { /* Anpassa även denna för mobil */
-                width: 60px; 
-            }
-            .input-field.comments-field { /* Anpassa även denna för mobil */
-                width: 100px; 
-            }
-            .delete-row-btn {
-                padding: 3px 6px;
-                font-size: 0.7em;
-            }
-
-            .summary {
-                padding: 15px;
-                font-size: 0.9em;
-            }
-            .summary-row {
-                flex-direction: column;
-                align-items: flex-start;
-                margin-bottom: 8px;
-            }
-            .summary-row span:first-child {
-                font-weight: normal;
-                margin-bottom: 2px;
-            }
-            .summary-row span:last-child {
-                font-weight: bold;
-            }
-            .total {
-                font-size: 1.1em;
-                padding-top: 8px;
-                margin-top: 8px;
-            }
-            .btn {
-                padding: 8px 15px;
-                font-size: 0.9em;
-                margin: 4px;
-            }
-            .footer {
-                padding: 15px;
-                font-size: 0.8em;
-            }
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tidrapport med Löneberäkning</title>
+        <link rel="stylesheet" href="/css/calculator.css">
 </head>
 <body>
     <div class="topbar">
         <h2>Navigation</h2>
         <ul>
-            <li><a href="/">Hem</a></li>
+            <li><a href="/index.html">Hem</a></li>
             <li><a href="/calculator.html">Butik Kalkylator</a></li>
+            <li><a href="/calculatorv2.html">Kalkylator v2</a></li>
         </ul>
     </div>
-    <div class="main-content">
-        <div class="container calculator-wrapper">
-            <h1>Tidrapportskalkylator Handel Sverige</h1>
-
-            <div class="ob-legend">
-                <h3>OB-ERSÄTTNING</h3>
-                <ul>
-                    <li>50% : Vardagar 18:15-20:00</li>
-                    <li>70% : Vardagar efter 20:00</li>
-                    <li>100% : Lördagar efter 12:00, Söndagar och helgdagar (hela dagen)</li>
-                </ul>
-                <h4>Dagar som räknas som Lördag:</h4>
-                <p>Påskafton, Midsommarafton, Julafton, Nyårsafton</p>
+    <div class="container">
+        <h1>📊 Tidrapport med Löneberäkning och OB-tillägg</h1>
+        <div style="text-align: center; margin-bottom: 20px; font-size: 1.1em; color: #666;">
+            <span id="currentTime"></span>
+        </div>
+        
+        <div class="settings-section">
+            <h3>Löne- och OB-inställningar</h3>
+            <div class="settings-row">
+                <label for="basePay">Grundlön (kr/tim):</label>
+                <input type="number" id="basePay" value="162.98" step="0.01" min="0">
             </div>
-
-            <div class="settings-section">
-                <h2>Generella Inställningar</h2>
-                <div class="settings-row">
-                    <label for="hourlyRate">Ordinarie Timlön:</label>
-                    <input type="number" id="hourlyRate" value="162.98" onchange="saveAllData(); updateSummary();">
-                    <label for="taxRate">Skatteavdrag (%):</label>
-                    <input type="number" id="taxRate" value="30" onchange="saveAllData(); updateSummary();">
-                </div>
+            <div class="settings-row">
+                <label for="eveningRate">Vardagar från 18:15 (50%):</label>
+                <input type="number" id="eveningRate" value="50" step="0.01" min="0" max="200"> <span>% av grundlön</span>
             </div>
-
-            <div class="settings-section" style="margin-top: 20px;">
-                <h2>Periodvy</h2>
-                <div class="settings-row">
-                    <label for="periodFilter">Välj Period:</label>
-                    <select id="periodFilter" onchange="handlePeriodFilterChange()">
-                        <option value="all">Alla rader</option>
-                        <option value="thisMonth">Denna månad</option>
-                        <option value="lastMonth">Förra månaden</option>
-                        <option value="custom">Anpassad period</option>
-                    </select>
-                </div>
-                <div class="settings-row" id="customPeriodFields" style="display: none; margin-top: 10px;">
-                    <label for="startDate">Från:</label>
-                    <input type="date" id="startDate" onchange="filterTimesheetByPeriod(); saveAllData();">
-                    <label for="endDate">Till:</label>
-                    <input type="date" id="endDate" onchange="filterTimesheetByPeriod(); saveAllData();">
-                    <button class="btn" onclick="clearCustomPeriod();">Rensa period</button>
-                </div>
+            <div class="settings-row">
+                <label for="lateEveningRate">Vardagar efter 20:00 (70%):</label>
+                <input type="number" id="lateEveningRate" value="70" step="0.01" min="0" max="200"> <span>% av grundlön</span>
             </div>
+            <div class="settings-row">
+                <label for="saturdayRate">Lördag från 12:00 (100%):</label>
+                <input type="number" id="saturdayRate" value="100" step="0.01" min="0" max="200"> <span>% av grundlön</span>
+            </div>
+            <div class="settings-row">
+                <label for="sundayRate">Söndag hela dagen (100%):</label>
+                <input type="number" id="sundayRate" value="100" step="0.01" min="0" max="200"> <span>% av grundlön</span>
+            </div>
+            <div class="settings-row">
+                <label for="holidayRate">Helgtillägg (100%):</label>
+                <input type="number" id="holidayRate" value="100" step="0.01" min="0" max="200"> <span>% av grundlön</span>
+            </div>
+            <div class="settings-row">
+                <label for="taxRate">Skattesats (%):</label>
+                <input type="number" id="taxRate" value="30" step="0.01" min="0" max="100"> <span>% av bruttolön</span>
+            </div>
+        </div>
 
-            <table>
+        <div class="ob-legend">
+            <h3>OB-tillägg förklaring:</h3>
+            <p><strong>Vardagar från 18:15:</strong> 50% av grundlön (måndag-fredag)</p>
+            <p><strong>Vardagar efter 20:00:</strong> 70% av grundlön (måndag-fredag)</p>
+            <p><strong>Lördag från 12:00:</strong> 100% av grundlön</p>
+            <p><strong>Söndag hela dagen:</strong> 100% av grundlön</p>
+            <p><strong>Helgtillägg:</strong> 100% av grundlön (alla timmar på helgdagar)</p>
+            <p><strong>Röd dag:</strong> Kryssa i för att räkna dagen som helgdag (100% tillägg). Systemet försöker förfylla baserat på svenska helgdagar 2025 och söndagar.</p>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn" onclick="addDay()">➕ Lägg till dag</button>
+            <button class="btn" onclick="calculateAll()">🔄 Beräkna totalt</button>
+            <button class="btn" onclick="exportData()">📤 Exportera data</button>
+            <button class="btn" onclick="saveData()">💾 Spara data</button>
+            <button class="btn" onclick="clearAllData()">🗑️ Rensa all data</button>
+        </div>
+
+        <div class="day-table-container">
+            <table id="timeReportTable">
                 <thead>
                     <tr>
                         <th>Datum</th>
                         <th>Dag</th>
+                        <th>Röd dag</th>
                         <th>Starttid</th>
                         <th>Sluttid</th>
                         <th>Rast (min)</th>
-                        <th>Avvikande Timlön</th>
-                        <th>Helgdag?</th>
-                        <th>Typ av pass/Kommentarer</th> <th>Timmar</th>
-                        <th>OB 1 Timmar</th>
-                        <th>OB 2 Timmar</th>
-                        <th>OB 3 Timmar</th>
+                        <th>Arbetstid</th>
                         <th>Grundlön</th>
                         <th>OB-tillägg</th>
-                        <th>Totalt (exkl. skatt)</th>
-                        <th></th>
+                        <th>Brutto</th>
+                        <th>Skatt</th>
+                        <th>Netto</th>
+                        <th>Åtgärder</th>
                     </tr>
                 </thead>
-                <tbody id="timesheetBody">
-                </tbody>
+                <tbody>
+                    </tbody>
             </table>
+        </div>
 
-            <div class="summary">
-                <h2>Månadssummering</h2>
-                <div class="summary-row">
-                    <span>Totala Arbetstimmar:</span>
-                    <span id="totalHours">0.00</span>
-                </div>
-                <div class="summary-row">
-                    <span>Total OB 1 Timmar:</span>
-                    <span id="totalOb1Hours">0.00</span>
-                </div>
-                <div class="summary-row">
-                    <span>Total OB 2 Timmar:</span>
-                    <span id="totalOb2Hours">0.00</span>
-                </div>
-                <div class="summary-row">
-                    <span>Total OB 3 Timmar:</span>
-                    <span id="totalOb3Hours">0.00</span>
-                </div>
-                <div class="summary-row total">
-                    <span>Bruttolön (före skatt):</span>
-                    <span id="grossPay">0.00 kr</span>
-                </div>
-                <div class="tax-section summary-row">
-                    <span>Beräknat Skatteavdrag (<span id="displayTaxRate">30</span>%):</span>
-                    <span id="taxDeduction">0.00 kr</span>
-                </div>
-                <div class="summary-row total">
-                    <span>Utbetald Lön (efter skatt):</span>
-                    <span id="netPay">0.00 kr</span>
-                </div>
+        <div class="summary">
+            <h3>📈 Månadssummering</h3>
+            <div class="summary-row">
+                <span>Totala arbetstimmar:</span>
+                <span id="totalHours">0.0</span>
             </div>
-
-            <button class="btn" onclick="addDay()">Lägg till dag</button>
-            <button class="btn" onclick="clearAll()">Rensa allt</button>
-            <button class="btn" onclick="exportData()">Exportera data</button>
-            <input type="file" id="importFile" accept=".csv" style="display: none;" onchange="importData(event)">
-            <button class="btn" onclick="document.getElementById('importFile').click()">Importera data</button>
-
-            <p class="error" id="errorMessages" style="color: red; margin-top: 20px; display: none;"></p>
-
-            <script>
-                let dayCounter = 0;
-                let dailyData = {}; // Lagrar beräknad data för varje rad
-                const hourlyRateInput = document.getElementById('hourlyRate');
-                const taxRateInput = document.getElementById('taxRate');
-                const timesheetBody = document.getElementById('timesheetBody');
-                const errorMessagesDisplay = document.getElementById('errorMessages');
-                
-                // Nya referenser för periodväljaren
-                const periodFilterSelect = document.getElementById('periodFilter'); 
-                const customPeriodFields = document.getElementById('customPeriodFields');
-                const startDateInput = document.getElementById('startDate');
-                const endDateInput = document.getElementById('endDate');
-
-                // OB-satser definierade som konstanter
-                const OB1_RATE = 0.50; // 50%
-                const OB2_RATE = 0.70; // 70%
-                const OB3_RATE = 1.00; // 100%
-
-                // Helgdagar som ger 100% OB hela dagen
-                let holidays = [];
-
-                // Dagar som räknas som lördag med 100% OB efter kl. 12:00 (specifik för butik)
-                const saturdayOBDays = [
-                    "2025-04-19", // Påskafton
-                    "2025-06-20", // Midsommarafton
-                    "2025-12-24", // Julafton
-                    "2025-12-31"  // Nyårsafton
-                ];
-
-                document.addEventListener('DOMContentLoaded', async () => {
-                    try {
-                        const response = await fetch('holidays.json');
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        holidays = await response.json();
-                        console.log("Helgdagar laddade från holidays.json:", holidays);
-                    } catch (error) {
-                        console.error("Kunde inte ladda helgdagar från JSON-fil:", error);
-                        // Fallback-lista om filen inte kan laddas
-                        holidays = [
-                            "2025-01-01", "2025-01-06", "2025-04-18", "2025-04-20", "2025-04-21",
-                            "2025-05-01", "2025-05-29", "2025-06-06", "2025-06-21", "2025-11-01",
-                            "2025-12-25", "2025-12-26"
-                        ];
-                        showError("Varning: Kunde inte ladda helgdagar automatiskt. Använder en fördefinierad standardlista.");
-                    }
-                    loadAllData(); // Försök ladda all sparad data
-                    // loadAllData kommer nu anropa handlePeriodFilterChange som i sin tur anropar filterTimesheetByPeriod och updateSummary
-                });
-
-                // Funktion för att spara ALL data till Local Storage
-                function saveAllData() {
-                    const dataToSave = {
-                        settings: {
-                            hourlyRate: hourlyRateInput.value,
-                            taxRate: taxRateInput.value,
-                            periodFilter: periodFilterSelect.value, // Spara vald period
-                            startDate: startDateInput.value,       // Spara anpassad startdatum
-                            endDate: endDateInput.value            // Spara anpassad slutdatum
-                        },
-                        rows: []
-                    };
-
-                    const rows = timesheetBody.querySelectorAll('tr');
-                    rows.forEach(row => {
-                        const rowId = row.id;
-                        dataToSave.rows.push({
-                            id: rowId,
-                            date: document.getElementById(`date-${rowId}`).value,
-                            startTime: document.getElementById(`start-${rowId}`).value,
-                            endTime: document.getElementById(`end-${rowId}`).value,
-                            restMinutes: document.getElementById(`rest-${rowId}`).value,
-                            hourlyRateOverride: document.getElementById(`hourlyRateOverride-${rowId}`).value,
-                            isHoliday: document.getElementById(`holiday-${rowId}`).checked,
-                            comments: document.getElementById(`comments-${rowId}`).value // Ny: Spara kommentarer
-                        });
-                    });
-                    localStorage.setItem('timesheetData', JSON.stringify(dataToSave));
-                }
-
-                // Funktion för att ladda ALL data från Local Storage
-                function loadAllData() {
-                    const savedData = localStorage.getItem('timesheetData');
-                    if (savedData) {
-                        const data = JSON.parse(savedData);
-
-                        // Ladda inställningar
-                        if (data.settings) {
-                            hourlyRateInput.value = data.settings.hourlyRate || "162.98";
-                            taxRateInput.value = data.settings.taxRate || "30";
-                            periodFilterSelect.value = data.settings.periodFilter || 'all'; // Ladda vald period
-                            startDateInput.value = data.settings.startDate || '';           // Ladda anpassad startdatum
-                            endDateInput.value = data.settings.endDate || '';               // Ladda anpassad slutdatum
-                        }
-
-                        timesheetBody.innerHTML = '';
-                        dailyData = {};
-                        dayCounter = 0;
-
-                        if (data.rows && data.rows.length > 0) {
-                            data.rows.forEach(rowData => {
-                                addDay({
-                                    date: rowData.date,
-                                    startTime: rowData.startTime,
-                                    endTime: rowData.endTime,
-                                    restMinutes: parseInt(rowData.restMinutes) || 0,
-                                    hourlyRateOverride: rowData.hourlyRateOverride || '',
-                                    isHoliday: rowData.isHoliday,
-                                    comments: rowData.comments || '' // Ny: Ladda kommentarer
-                                });
-                            });
-                        } else {
-                            addDay();
-                        }
-                    } else {
-                        addDay();
-                    }
-                    // Efter laddning av all data och inställningar, anropa handlePeriodFilterChange
-                    // Denna kommer att visa/dölja fält för anpassad period och sedan filtrera samt uppdatera summering.
-                    handlePeriodFilterChange(); 
-                }
-
-                // Hjälpfunktion för att visa felmeddelanden vid fälten
-                function showFieldFeedback(inputElement, isValid, message = '') {
-                    if (isValid) {
-                        inputElement.style.borderColor = ''; // Återställ standardfärg
-                        inputElement.title = ''; // Rensa tooltip
-                    } else {
-                        inputElement.style.borderColor = 'red'; // Markera fältet rött
-                        inputElement.title = message; // Visa felmeddelande vid hovring
-                    }
-                }
-
-                // Funktion för att visa globala felmeddelanden
-                function showError(message) {
-                    errorMessagesDisplay.innerText = message;
-                    errorMessagesDisplay.style.display = 'block'; // Visa felmeddelande
-                }
-
-                // Funktion för att rensa globala felmeddelanden
-                function clearError() {
-                    errorMessagesDisplay.innerText = '';
-                    errorMessagesDisplay.style.display = 'none'; // Dölj felmeddelande
-                }
-
-                function formatTime(date) {
-                    return date.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
-                }
-
-                function addDay(initialData = {}) {
-                    dayCounter++;
-                    const rowId = `row-${dayCounter}`;
-                    const now = new Date();
-                    let dateId = initialData.date; // Använd initialData om det finns
-
-                    // Om ingen initialData.date är given, bestäm datum baserat på filter
-                    if (!dateId) {
-                        const selectedPeriod = periodFilterSelect.value;
-                        if (selectedPeriod === 'thisMonth') {
-                            const today = new Date();
-                            // Sätt datumet till första dagen i aktuell månad
-                            dateId = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
-                        } else if (selectedPeriod === 'lastMonth') {
-                            const today = new Date();
-                            // Sätt datumet till första dagen i förra månaden
-                            dateId = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().slice(0, 10);
-                        } else if (selectedPeriod === 'custom' && startDateInput.value) {
-                            // Om anpassad period är vald och ett startdatum finns, använd det som standard
-                            dateId = startDateInput.value; 
-                        } else {
-                            // Standard: dagens datum
-                            dateId = now.toISOString().slice(0, 10); 
-                        }
-                    }
-
-                    const defaultStartTime = "09:00";
-                    const defaultEndTime = "17:00";
-
-                    const row = timesheetBody.insertRow();
-                    row.id = rowId;
-
-                    row.innerHTML = `
-                        <td><input type="date" class="input-field" id="date-${rowId}" value="${dateId}" onchange="updateRowDate('${rowId}')"></td>
-                        <td id="dayOfWeek-${rowId}">${initialData.dayOfWeek || ''}</td>
-                        <td><input type="time" class="input-field" id="start-${rowId}" value="${initialData.startTime || defaultStartTime}" onchange="calculateRow('${rowId}')"></td>
-                        <td><input type="time" class="input-field" id="end-${rowId}" value="${initialData.endTime || defaultEndTime}" onchange="calculateRow('${rowId}')"></td>
-                        <td><input type="number" class="input-field" id="rest-${rowId}" value="${initialData.restMinutes || 0}" min="0" onchange="calculateRow('${rowId}')"></td>
-                        <td><input type="number" class="input-field hourly-rate-override" id="hourlyRateOverride-${rowId}" value="${initialData.hourlyRateOverride || ''}" placeholder="Ordinarie" onchange="calculateRow('${rowId}')" min="0"></td>
-                        <td><input type="checkbox" class="checkbox-field" id="holiday-${rowId}" ${initialData.isHoliday ? 'checked' : ''} onchange="calculateRow('${rowId}')"></td>
-                        <td><input type="text" class="input-field comments-field" id="comments-${rowId}" value="${initialData.comments || ''}" onchange="saveAllData()"></td> <td id="hours-${rowId}">0.00</td>
-                        <td id="ob1-${rowId}">0.00</td>
-                        <td id="ob2-${rowId}">0.00</td>
-                        <td id="ob3-${rowId}">0.00</td>
-                        <td id="grundlon-${rowId}">0.00</td>
-                        <td id="obTullagg-${rowId}">0.00</td>
-                        <td id="totalDayPay-${rowId}">0.00</td>
-                        <td><button class="delete-row-btn" onclick="deleteRow('${rowId}')">X</button></td>
-                    `;
-                    
-                    document.getElementById(`rest-${rowId}`).setAttribute('min', '0');
-                    document.getElementById(`hourlyRateOverride-${rowId}`).setAttribute('min', '0'); // Säkerställ att avvikande timlön inte kan vara negativ
-
-                    dailyData[rowId] = {
-                        date: dateId,
-                        hours: 0, ob1: 0, ob2: 0, ob3: 0, grundlon: 0, obTullagg: 0, totalDayPay: 0
-                    };
-
-                    updateRowDate(rowId);
-                    filterTimesheetByPeriod(); // Applicera filtret direkt på den nya raden
-                }
-
-                function deleteRow(rowId) {
-                    const row = document.getElementById(rowId);
-                    if (row) {
-                        row.remove();
-                        delete dailyData[rowId];
-                        updateSummary();
-                        saveAllData(); // Spara efter radering
-                        clearError();
-                    }
-                }
-
-                function updateRowDate(rowId) {
-                    const dateInput = document.getElementById(`date-${rowId}`);
-                    const dateVal = dateInput.value;
-                    const date = new Date(dateVal + 'T12:00:00'); 
-                    
-                    showFieldFeedback(dateInput, !isNaN(date.getTime()), "Ogiltigt datum.");
-
-                    if (isNaN(date.getTime())) {
-                        document.getElementById(`dayOfWeek-${rowId}`).innerText = "Ogiltigt datum";
-                        document.getElementById(rowId).className = '';
-                        calculateRow(rowId);
-                        return;
-                    }
-
-                    const options = { weekday: 'short' };
-                    const dayOfWeekText = date.toLocaleDateString('sv-SE', options);
-                    const dayOfWeekNum = date.getDay(); 
-                    document.getElementById(`dayOfWeek-${rowId}`).innerText = dayOfWeekText;
-
-                    const dateId = date.toISOString().slice(0, 10);
-                    dailyData[rowId].date = dateId;
-
-                    let rowElement = document.getElementById(rowId);
-                    rowElement.classList.remove('red-day', 'weekend'); 
-                    
-                    const isActualHoliday = holidays.includes(dateId);
-                    const isSaturdayObDay = saturdayOBDays.includes(dateId);
-
-                    if (dayOfWeekNum === 0 || isActualHoliday) {
-                        rowElement.classList.add('red-day');
-                        if (!document.getElementById(`holiday-${rowId}`).checked) {
-                            document.getElementById(`holiday-${rowId}`).checked = true;
-                        }
-                    } else if (dayOfWeekNum === 6 || isSaturdayObDay) { 
-                        rowElement.classList.add('weekend');
-                        if (isSaturdayObDay && !document.getElementById(`holiday-${rowId}`).checked) {
-                             document.getElementById(`holiday-${rowId}`).checked = true;
-                        }
-                    } else { 
-                        // Om det är en vanlig vardag och holiday-rutan är ikryssad, avmarkera den
-                        // (om den inte är en speciell lördag som räknas som helgdag)
-                        if (document.getElementById(`holiday-${rowId}`).checked && !isSaturdayObDay) {
-                            document.getElementById(`holiday-${rowId}`).checked = false;
-                        }
-                    }
-
-                    calculateRow(rowId);
-                }
-
-
-                function parseTimeToMinutes(timeStr) {
-                    if (!timeStr) return null;
-                    const [hours, minutes] = timeStr.split(':').map(Number);
-                    if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
-                        return null; 
-                    }
-                    return hours * 60 + minutes;
-                }
-
-                function calculateRow(rowId) {
-                    clearError(); 
-
-                    const dateInput = document.getElementById(`date-${rowId}`);
-                    const startInput = document.getElementById(`start-${rowId}`);
-                    const endInput = document.getElementById(`end-${rowId}`);
-                    const restInput = document.getElementById(`rest-${rowId}`);
-                    const hourlyRateOverrideInput = document.getElementById(`hourlyRateOverride-${rowId}`);
-                    const holidayCheckbox = document.getElementById(`holiday-${rowId}`);
-
-                    const dateVal = dateInput.value;
-                    const date = new Date(dateVal + 'T12:00:00'); 
-                    const dayOfWeek = date.getDay(); 
-                    const dateId = date.toISOString().slice(0, 10);
-
-                    let startTime = parseTimeToMinutes(startInput.value);
-                    let endTime = parseTimeToMinutes(endInput.value);
-                    let restMinutes = parseInt(restInput.value) || 0;
-                    
-                    let overrideRate = parseFloat(hourlyRateOverrideInput.value);
-                    const currentHourlyRate = (!isNaN(overrideRate) && overrideRate >= 0) ? overrideRate : parseFloat(hourlyRateInput.value) || 0;
-
-                    showFieldFeedback(startInput, true);
-                    showFieldFeedback(endInput, true);
-                    showFieldFeedback(restInput, true);
-                    showFieldFeedback(hourlyRateOverrideInput, true);
-
-                    let isValid = true;
-                    
-                    if (startTime === null) {
-                        showFieldFeedback(startInput, false, "Ogiltig starttid. Använd HH:MM format (t.ex. 09:00).");
-                        isValid = false;
-                    }
-                    if (endTime === null) {
-                        showFieldFeedback(endInput, false, "Ogiltig sluttid. Använd HH:MM format (t.ex. 17:00).");
-                        isValid = false;
-                    }
-                    if (restMinutes < 0) {
-                        showFieldFeedback(restInput, false, "Rast kan inte vara negativ.");
-                        isValid = false;
-                    }
-                    if (!isNaN(overrideRate) && overrideRate < 0) {
-                        showFieldFeedback(hourlyRateOverrideInput, false, "Avvikande timlön kan inte vara negativ.");
-                        isValid = false;
-                    }
-
-                    if (!isValid) {
-                        resetRowCalculation(rowId, dateId);
-                        saveAllData(); 
-                        return;
-                    }
-
-                    let totalMinutesGross = 0; 
-                    let isOvernight = false;
-
-                    if (endTime > startTime) {
-                        totalMinutesGross = endTime - startTime;
-                    } else { 
-                        totalMinutesGross = (24 * 60 - startTime) + endTime;
-                        isOvernight = true;
-                    }
-
-                    if (restMinutes >= totalMinutesGross && totalMinutesGross > 0) {
-                        showFieldFeedback(restInput, false, "Rasten kan inte vara längre än arbetspasset.");
-                        isValid = false;
-                    }
-
-                    const MAX_WORK_MINUTES = 16 * 60; 
-
-                    if (totalMinutesGross > MAX_WORK_MINUTES) {
-                        if (!isOvernight) { 
-                             showFieldFeedback(endInput, false, `Passet (${startInput.value} till ${endInput.value}) är orimligt långt (${(totalMinutesGross / 60).toFixed(1)} timmar). Kontrollera om du menar nästa dag, eller justera tiderna.`);
-                             showFieldFeedback(startInput, false, ""); 
-                        } else { 
-                             showFieldFeedback(endInput, false, `Passet (${startInput.value} till ${endInput.value}) går över midnatt men är fortfarande orimligt långt (${(totalMinutesGross / 60).toFixed(1)} timmar). Kontrollera tiderna.`);
-                             showFieldFeedback(startInput, false, ""); 
-                        }
-                        isValid = false;
-                    }
-                    
-                    if (!isValid) {
-                        resetRowCalculation(rowId, dateId);
-                        saveAllData(); 
-                        return;
-                    }
-
-                    let minutesRemainingForCalculation = totalMinutesGross; 
-                    let hoursWorked = 0;
-                    let ob1Hours = 0;
-                    let ob2Hours = 0;
-                    let ob3Hours = 0;
-
-                    const currentOb1Rate = OB1_RATE;
-                    const currentOb2Rate = OB2_RATE;
-                    const currentOb3Rate = OB3_RATE;
-                    
-                    const time12_00 = parseTimeToMinutes("12:00");
-                    const time18_15 = parseTimeToMinutes("18:15");
-                    const time20_00 = parseTimeToMinutes("20:00");
-
-                    const minuteTypes = new Array(totalMinutesGross).fill(0); 
-
-                    for (let m = 0; m < totalMinutesGross; m++) {
-                        const currentMinuteAbsolute = startTime + m;
-                        let minuteDate = new Date(date);
-                        let minuteDayOffset = 0; 
-
-                        if (currentMinuteAbsolute >= 24 * 60) {
-                            minuteDayOffset = Math.floor(currentMinuteAbsolute / (24 * 60));
-                            minuteDate.setDate(date.getDate() + minuteDayOffset);
-                        }
-                        const minuteDayOfWeek = minuteDate.getDay();
-                        const minuteDateId = minuteDate.toISOString().slice(0, 10);
-                        
-                        const currentMinuteOfDay = currentMinuteAbsolute % (24 * 60);
-
-                        let type = 0; 
-
-                        const isActualHoliday = holidays.includes(minuteDateId);
-                        const isSaturdayObDay = saturdayOBDays.includes(minuteDateId);
-
-                        if (holidayCheckbox.checked || minuteDayOfWeek === 0 || isActualHoliday || (minuteDayOfWeek === 6 && currentMinuteOfDay >= time12_00) || isSaturdayObDay) {
-                            type = 3; 
-                        } else if (minuteDayOfWeek >= 1 && minuteDayOfWeek <= 5) { 
-                            if (currentMinuteOfDay >= time20_00) {
-                                type = 2; 
-                            } else if (currentMinuteOfDay >= time18_15) {
-                                type = 1; 
-                            }
-                        }
-                        minuteTypes[m] = type;
-                    }
-
-                    let deductedRest = 0;
-                    for (let m = 0; m < totalMinutesGross && deductedRest < restMinutes; m++) {
-                        if (minuteTypes[m] === 0) {
-                            minuteTypes[m] = -1; 
-                            deductedRest++;
-                        }
-                    }
-
-                    for (let type = 1; type <= 3 && deductedRest < restMinutes; type++) {
-                        for (let m = 0; m < totalMinutesGross && deductedRest < restMinutes; m++) {
-                            if (minuteTypes[m] === type) {
-                                minuteTypes[m] = -1; 
-                                deductedRest++;
-                            }
-                        }
-                    }
-
-                    for (let m = 0; m < totalMinutesGross; m++) {
-                        if (minuteTypes[m] !== -1) { 
-                            hoursWorked += (1 / 60);
-                            if (minuteTypes[m] === 1) {
-                                ob1Hours += (1 / 60);
-                            } else if (minuteTypes[m] === 2) {
-                                ob2Hours += (1 / 60);
-                            } else if (minuteTypes[m] === 3) {
-                                ob3Hours += (1 / 60);
-                            }
-                        }
-                    }
-
-                    const grundlon = hoursWorked * currentHourlyRate; 
-                    const obTullagg = (ob1Hours * currentHourlyRate * currentOb1Rate) +
-                                      (ob2Hours * currentHourlyRate * currentOb2Rate) +
-                                      (ob3Hours * currentHourlyRate * currentOb3Rate);
-                    const totalDayPay = grundlon + obTullagg;
-
-                    document.getElementById(`hours-${rowId}`).innerText = hoursWorked.toFixed(2);
-                    document.getElementById(`ob1-${rowId}`).innerText = ob1Hours.toFixed(2);
-                    document.getElementById(`ob2-${rowId}`).innerText = ob2Hours.toFixed(2);
-                    document.getElementById(`ob3-${rowId}`).innerText = ob3Hours.toFixed(2);
-                    document.getElementById(`grundlon-${rowId}`).innerText = grundlon.toFixed(2);
-                    document.getElementById(`obTullagg-${rowId}`).innerText = obTullagg.toFixed(2);
-                    document.getElementById(`totalDayPay-${rowId}`).innerText = totalDayPay.toFixed(2);
-
-                    dailyData[rowId] = {
-                        date: dateId,
-                        hours: hoursWorked,
-                        ob1: ob1Hours,
-                        ob2: ob2Hours,
-                        ob3: ob3Hours,
-                        grundlon: grundlon,
-                        obTullagg: obTullagg,
-                        totalDayPay: totalDayPay
-                    };
-
-                    updateSummary();
-                    saveAllData();
-                }
-
-                function resetRowCalculation(rowId, dateId) {
-                    document.getElementById(`hours-${rowId}`).innerText = "0.00";
-                    document.getElementById(`ob1-${rowId}`).innerText = "0.00";
-                    document.getElementById(`ob2-${rowId}`).innerText = "0.00";
-                    document.getElementById(`ob3-${rowId}`).innerText = "0.00";
-                    document.getElementById(`grundlon-${rowId}`).innerText = "0.00";
-                    document.getElementById(`obTullagg-${rowId}`).innerText = "0.00";
-                    document.getElementById(`totalDayPay-${rowId}`).innerText = "0.00";
-
-                    dailyData[rowId] = {
-                        date: dateId,
-                        hours: 0, ob1: 0, ob2: 0, ob3: 0, grundlon: 0, obTullagg: 0, totalDayPay: 0
-                    };
-                    updateSummary();
-                }
-
-                // Funktion för att hantera ändring i dropdown-menyn
-                function handlePeriodFilterChange() {
-                    const selectedValue = periodFilterSelect.value;
-                    const today = new Date();
-                    let start = '';
-                    let end = '';
-
-                    customPeriodFields.style.display = 'none'; // Dölj anpassade fält som standard
-
-                    switch (selectedValue) {
-                        case 'all':
-                            break;
-                        case 'thisMonth':
-                            start = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
-                            end = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().slice(0, 10);
-                            break;
-                        case 'lastMonth':
-                            start = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().slice(0, 10);
-                            end = new Date(today.getFullYear(), today.getMonth(), 0).toISOString().slice(0, 10);
-                            break;
-                        case 'custom':
-                            customPeriodFields.style.display = 'flex'; 
-                            start = startDateInput.value;
-                            end = endDateInput.value;
-                            break;
-                    }
-                    
-                    startDateInput.value = start;
-                    endDateInput.value = end;
-                    filterTimesheetByPeriod(); 
-                    saveAllData(); 
-                }
-
-                // Ny funktion för att rensa anpassade periodfält
-                function clearCustomPeriod() {
-                    startDateInput.value = '';
-                    endDateInput.value = '';
-                    filterTimesheetByPeriod();
-                    saveAllData();
-                }
-
-                // Huvudfunktion för att filtrera tidrapporten baserat på vald period
-                function filterTimesheetByPeriod() {
-                    const selectedValue = periodFilterSelect.value;
-                    const filterStartDate = startDateInput.value ? new Date(startDateInput.value + 'T00:00:00') : null;
-                    const filterEndDate = endDateInput.value ? new Date(endDateInput.value + 'T23:59:59') : null;
-
-                    const rows = timesheetBody.querySelectorAll('tr');
-                    rows.forEach(row => {
-                        const dateInput = document.getElementById(`date-${row.id}`);
-                        const rowDate = dateInput ? new Date(dateInput.value + 'T12:00:00') : null;
-
-                        let shouldDisplay = true;
-
-                        if (selectedValue !== 'all' && rowDate) {
-                            if (filterStartDate && rowDate < filterStartDate) {
-                                shouldDisplay = false;
-                            }
-                            if (filterEndDate && rowDate > filterEndDate) {
-                                shouldDisplay = false;
-                            }
-                        } else if (selectedValue !== 'all' && !rowDate) {
-                            shouldDisplay = false;
-                        }
-
-                        if (shouldDisplay) {
-                            row.style.display = ''; 
-                        } else {
-                            row.style.display = 'none'; 
-                        }
-                    });
-                    updateSummary(); 
-                }
-                
-                function updateSummary() {
-                    let totalHours = 0;
-                    let totalOb1Hours = 0;
-                    let totalOb2Hours = 0;
-                    let totalOb3Hours = 0;
-                    let grossPay = 0;
-                    const taxRate = parseFloat(taxRateInput.value) || 0;
-
-                    const visibleRows = timesheetBody.querySelectorAll('tr:not([style*="display: none"])');
-
-                    visibleRows.forEach(row => {
-                        const rowId = row.id;
-                        const data = dailyData[rowId];
-                        if (data) {
-                            totalHours += data.hours;
-                            totalOb1Hours += data.ob1;
-                            totalOb2Hours += data.ob2;
-                            totalOb3Hours += data.ob3;
-                            grossPay += data.totalDayPay;
-                        }
-                    });
-
-                    const taxDeduction = grossPay * (taxRate / 100);
-                    const netPay = grossPay - taxDeduction;
-
-                    document.getElementById('totalHours').innerText = totalHours.toFixed(2);
-                    document.getElementById('totalOb1Hours').innerText = totalOb1Hours.toFixed(2);
-                    document.getElementById('totalOb2Hours').innerText = totalOb2Hours.toFixed(2);
-                    document.getElementById('totalOb3Hours').innerText = totalOb3Hours.toFixed(2);
-                    document.getElementById('grossPay').innerText = grossPay.toFixed(2) + " kr";
-                    document.getElementById('taxDeduction').innerText = taxDeduction.toFixed(2) + " kr";
-                    document.getElementById('netPay').innerText = netPay.toFixed(2) + " kr";
-                    document.getElementById('displayTaxRate').innerText = taxRate.toFixed(0);
-                }
-
-                function clearAll() {
-                    timesheetBody.innerHTML = '';
-                    dailyData = {};
-                    dayCounter = 0;
-                    
-                    periodFilterSelect.value = 'all'; 
-                    startDateInput.value = '';
-                    endDateInput.value = '';
-                    customPeriodFields.style.display = 'none';
-                    
-                    updateSummary();
-                    clearError();
-                    localStorage.removeItem('timesheetData');
-                    addDay(); 
-                    filterTimesheetByPeriod(); 
-                }
-
-                function exportData() {
-                    // Uppdaterad rubrik för CSV-filen för att inkludera den nya kolumnen
-                    let csvContent = "Datum;Dag;Starttid;Sluttid;Rast (min);Avvikande Timlön;Helgdag?;Typ av pass/Kommentarer;Timmar;OB 1 Timmar;OB 2 Timmar;OB 3 Timmar;Grundlön;OB-tillägg;Totalt (exkl. skatt)\n";
-
-                    const rows = timesheetBody.querySelectorAll('tr'); 
-                    rows.forEach(row => {
-                        const rowId = row.id;
-                        const dateInput = document.getElementById(`date-${rowId}`);
-                        const dayOfWeek = document.getElementById(`dayOfWeek-${rowId}`).innerText;
-                        const startInput = document.getElementById(`start-${rowId}`);
-                        const endInput = document.getElementById(`end-${rowId}`);
-                        const restInput = document.getElementById(`rest-${rowId}`);
-                        const hourlyRateOverrideInput = document.getElementById(`hourlyRateOverride-${rowId}`);
-                        const holidayCheckbox = document.getElementById(`holiday-${rowId}`);
-                        const commentsInput = document.getElementById(`comments-${rowId}`); // Ny: Kommentarsfält
-
-                        const date = dateInput ? dateInput.value : '';
-                        const startTime = startInput ? startInput.value : '';
-                        const endTime = endInput ? endInput.value : '';
-                        const restMinutes = restInput ? restInput.value : '0';
-                        const hourlyRateOverride = hourlyRateOverrideInput ? hourlyRateOverrideInput.value : '';
-                        const isHoliday = holidayCheckbox ? (holidayCheckbox.checked ? 'Ja' : 'Nej') : 'Nej';
-                        const comments = commentsInput ? commentsInput.value : ''; // Hämta värdet
-
-                        const hours = document.getElementById(`hours-${rowId}`).innerText;
-                        const ob1 = document.getElementById(`ob1-${rowId}`).innerText;
-                        const ob2 = document.getElementById(`ob2-${rowId}`).innerText;
-                        const ob3 = document.getElementById(`ob3-${rowId}`).innerText;
-                        const grundlon = document.getElementById(`grundlon-${rowId}`).innerText;
-                        const obTullagg = document.getElementById(`obTullagg-${rowId}`).innerText;
-                        const totalDayPay = document.getElementById(`totalDayPay-${rowId}`).innerText;
-
-                        // Uppdaterad ordning för att matcha den nya rubriken
-                        csvContent += `"${date}";"${dayOfWeek}";"${startTime}";"${endTime}";"${restMinutes}";"${hourlyRateOverride}";"${isHoliday}";"${comments}";"${hours}";"${ob1}";"${ob2}";"${ob3}";"${grundlon}";"${obTullagg}";"${totalDayPay}"\n`;
-                    });
-
-                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = 'tidrapport_butik.csv';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }
-
-                async function importData(event) {
-                    const file = event.target.files[0];
-                    if (!file) {
-                        return;
-                    }
-
-                    const reader = new FileReader();
-                    reader.onload = async (e) => {
-                        const content = e.target.result;
-                        const lines = content.split('\n').filter(line => line.trim() !== '');
-
-                        if (lines.length < 2) {
-                            alert("Ogiltig CSV-fil. Ingen data att importera (för få rader eller tom fil).");
-                            return;
-                        }
-
-                        const header = lines[0].split(';').map(h => h.trim().replace(/"/g, ''));
-                        // Uppdaterad förväntad header
-                        const expectedHeaders = ["Datum", "Dag", "Starttid", "Sluttid", "Rast (min)", "Avvikande Timlön", "Helgdag?", "Typ av pass/Kommentarer", "Timmar", "OB 1 Timmar", "OB 2 Timmar", "OB 3 Timmar", "Grundlön", "OB-tillägg", "Totalt (exkl. skatt)"];
-
-                        if (header.length !== expectedHeaders.length || !expectedHeaders.every((val, index) => val === header[index])) {
-                            alert("CSV-filen har felaktigt format på rubrikerna. Kontrollera att filen är en oförändrad export från denna tidrapport. Förväntade rubriker: " + expectedHeaders.join("; "));
-                            return;
-                        }
-
-                        clearAll(); 
-
-                        for (let i = 1; i < lines.length; i++) {
-                            const values = lines[i].split(';').map(v => v.trim().replace(/"/g, ''));
-
-                            if (values.length >= expectedHeaders.length) { 
-                                const initialData = {
-                                    date: values[0],
-                                    dayOfWeek: values[1], 
-                                    startTime: values[2],
-                                    endTime: values[3],
-                                    restMinutes: parseInt(values[4]) || 0,
-                                    hourlyRateOverride: values[5] || '',
-                                    isHoliday: values[6].toLowerCase() === 'ja',
-                                    comments: values[7] || '' // Ny: Hämta kommentarer från rätt index
-                                };
-                                addDay(initialData);
-                            } else {
-                                console.warn(`Skipping malformed row ${i+1}: ${lines[i]}`);
-                                showError(`Varning: Rad ${i+1} i CSV-filen ignorerades på grund av felaktigt format.`);
-                            }
-                        }
-                        filterTimesheetByPeriod(); 
-                        alert("Data importerades framgångsrikt!");
-                        document.getElementById('importFile').value = '';
-                        clearError(); 
-                    };
-                    reader.readAsText(file);
-                }
-            </script>
+            <div class="summary-row">
+                <span>Grundlön (exkl. OB):</span>
+                <span id="totalBasePay">0 kr</span>
+            </div>
+            <div class="summary-row">
+                <span>OB-tillägg - Vardag kväll (18:15):</span>
+                <span id="totalEveningPay">0 kr</span>
+            </div>
+            <div class="summary-row">
+                <span>OB-tillägg - Vardag sen kväll (20:00):</span>
+                <span id="totalLateEveningPay">0 kr</span>
+            </div>
+            <div class="summary-row">
+                <span>OB-tillägg - Lördag (från 12:00):</span>
+                <span id="totalSaturdayPay">0 kr</span>
+            </div>
+            <div class="summary-row">
+                <span>OB-tillägg - Söndag:</span>
+                <span id="totalSundayPay">0 kr</span>
+            </div>
+            <div class="summary-row">
+                <span>OB-tillägg - Helgdagar:</span>
+                <span id="totalHolidayPay">0 kr</span>
+            </div>
+            <div class="summary-row total">
+                <span>BRUTTOLÖN:</span>
+                <span id="grandTotal">0 kr</span>
+            </div>
+            <div class="summary-row tax-section">
+                <span>Skatt (<span id="taxRateDisplay">30</span>%):</span>
+                <span id="totalTax">0 kr</span>
+            </div>
+            <div class="summary-row total">
+                <span>NETTOLÖN (efter skatt):</span>
+                <span id="netTotal">0 kr</span>
+            </div>
         </div>
     </div>
 
-    <div class="footer">
-        <p>&copy; 2025 Handel Sverige. Alla rättigheter reserverade.</p>
-        <p>Byggd med <span style="color: red;">&hearts;</span> av <a href="https://github.com/tjelite1986" target="_blank" rel="noopener noreferrer">TJELITE1986</a></p>
-        <p>Frågor? Kontakta oss via GitHub.</p>
-    </div>
+    <script>
+        let dayCounter = 0; // Unique ID for each day row
+        let allDaysData = {}; // Object to store data for each day, keyed by unique ID
+
+        // Svenska helgdagar 2025. Uppdatera denna lista årligen.
+        const holidays = [
+            '2025-01-01', '2025-01-06', '2025-04-18', '2025-04-19', '2025-04-20', '2025-04-21', 
+            '2025-05-01', '2025-05-29', '2025-06-06', '2025-06-20', '2025-06-21', // Midsommarafton, Midsommardagen
+            '2025-11-01', // Alla helgons dag
+            '2025-12-24', '2025-12-25', '2025-12-26'
+        ];
+
+        // --- Helper Functions ---
+
+        /**
+         * Converts a time string (e.g., "09:00") to minutes from midnight.
+         * @param {string} timeStr - The time string.
+         * @returns {number} Minutes from midnight.
+         */
+        function timeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        /**
+         * Converts minutes to hours (e.g., 90 minutes -> 1.5 hours).
+         * @param {number} minutes - The number of minutes.
+         * @returns {number} Hours.
+         */
+        function minutesToHours(minutes) {
+            return minutes / 60;
+        }
+
+        /**
+         * Formats a Date object to 'YYYY-MM-DD' string.
+         * @param {Date} date - The date object.
+         * @returns {string} Formatted date string.
+         */
+        function formatDateToISO(date) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        /**
+         * Updates the current time display.
+         */
+        function updateClock() {
+            const now = new Date();
+            const options = {
+                timeZone: 'Europe/Stockholm',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                weekday: 'long'
+            };
+            const formatter = new Intl.DateTimeFormat('sv-SE', options);
+            document.getElementById('currentTime').textContent = `🕐 ${formatter.format(now)}`;
+        }
+        
+        // --- Core UI Management ---
+
+        /**
+         * Adds a new day row to the table.
+         */
+        function addDay() {
+            const tableBody = document.querySelector('#timeReportTable tbody');
+            const newDayId = `day_${dayCounter++}`;
+            const today = formatDateToISO(new Date());
+
+            allDaysData[newDayId] = { date: today, start: '', end: '', break: 0, redDay: false }; // Initialize data
+
+            const newRow = tableBody.insertRow();
+            newRow.id = `row_${newDayId}`;
+
+            // Check if today is a holiday or Sunday for initial red day status
+            const currentDayDateObj = new Date(today);
+            const isSunday = currentDayDateObj.getDay() === 0;
+            const isHoliday = holidays.includes(today);
+            const initialRedDay = isSunday || isHoliday;
+            
+            // Apply initial weekend/red-day styling
+            if (isSunday || currentDayDateObj.getDay() === 6) { // Sunday or Saturday
+                newRow.classList.add('weekend');
+            }
+            if (initialRedDay) {
+                newRow.classList.add('red-day');
+            }
+            allDaysData[newDayId].redDay = initialRedDay; // Update stored data
+
+            newRow.innerHTML = `
+                <td><input type="date" class="input-field" id="date_${newDayId}" value="${today}" onchange="updateDayData('${newDayId}');"></td>
+                <td id="dayName_${newDayId}">${new Intl.DateTimeFormat('sv-SE', { weekday: 'long' }).format(currentDayDateObj)}</td>
+                <td><input type="checkbox" class="checkbox-field" id="redDay_${newDayId}" ${initialRedDay ? 'checked' : ''} onchange="updateRedDay('${newDayId}'); saveData();"></td>
+                <td><input type="time" class="input-field" id="start_${newDayId}" onchange="calculateRow('${newDayId}'); saveData();"></td>
+                <td><input type="time" class="input-field" id="end_${newDayId}" onchange="calculateRow('${newDayId}'); saveData();"></td>
+                <td><input type="number" class="input-field" id="break_${newDayId}" value="0" min="0" onchange="calculateRow('${newDayId}'); saveData();"></td>
+                <td id="hours_${newDayId}">0.0</td>
+                <td id="basePay_${newDayId}">0 kr</td>
+                <td id="obPay_${newDayId}">0 kr</td>
+                <td id="total_${newDayId}">0 kr</td>
+                <td id="tax_${newDayId}">0 kr</td>
+                <td id="net_${newDayId}">0 kr</td>
+                <td><button class="remove-day-btn" onclick="removeDay('${newDayId}')">X</button></td>
+            `;
+
+            saveData(); // Save data after adding a day
+            calculateAll(); // Recalculate totals
+        }
+
+        /**
+         * Updates the day name and red day status for a row when date input changes.
+         * @param {string} dayId - The unique ID of the day row.
+         */
+        function updateDayData(dayId) {
+            const dateInput = document.getElementById(`date_${dayId}`);
+            const dayNameCell = document.getElementById(`dayName_${dayId}`);
+            const redDayCheckbox = document.getElementById(`redDay_${dayId}`);
+            const row = document.getElementById(`row_${dayId}`);
+
+            if (dateInput.value) {
+                const date = new Date(dateInput.value);
+                const dayOfWeek = date.getDay(); // 0=Sunday, 1=Monday...
+                const dateISO = formatDateToISO(date);
+
+                dayNameCell.textContent = new Intl.DateTimeFormat('sv-SE', { weekday: 'long' }).format(date);
+                
+                // Determine initial redDay status
+                const isSunday = dayOfWeek === 0;
+                const isHoliday = holidays.includes(dateISO);
+                redDayCheckbox.checked = isSunday || isHoliday;
+                
+                // Update row styling
+                row.classList.remove('weekend', 'red-day');
+                if (isSunday || dayOfWeek === 6) { // Sunday or Saturday
+                    row.classList.add('weekend');
+                }
+                if (redDayCheckbox.checked) {
+                    row.classList.add('red-day');
+                }
+
+                allDaysData[dayId].date = dateInput.value; // Update stored date
+                allDaysData[dayId].redDay = redDayCheckbox.checked; // Update stored redDay status
+                calculateRow(dayId); // Recalculate row based on new date/redDay status
+                saveData();
+            }
+        }
+
+        /**
+         * Updates the red day status and styling for a row based on checkbox.
+         * @param {string} dayId - The unique ID of the day row.
+         */
+        function updateRedDay(dayId) {
+            const row = document.getElementById(`row_${dayId}`);
+            const redDayCheckbox = document.getElementById(`redDay_${dayId}`);
+            const dateInput = document.getElementById(`date_${dayId}`);
+            
+            if (dateInput.value) {
+                const date = new Date(dateInput.value);
+                const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                
+                // Update row styling
+                row.classList.remove('weekend', 'red-day'); // Reset classes
+                if (redDayCheckbox.checked) {
+                    row.classList.add('red-day');
+                } else if (isWeekend) {
+                    row.classList.add('weekend');
+                }
+                
+                allDaysData[dayId].redDay = redDayCheckbox.checked; // Update stored data
+                calculateRow(dayId);
+            }
+        }
+
+        /**
+         * Calculates the OB time for a given work period.
+         * Handles overnight shifts and various OB rules.
+         * @param {number} startMinutesOfDay1 - Start time in minutes from midnight (day 1).
+         * @param {number} endMinutesOfDay1 - End time in minutes from midnight (day 1).
+         * @param {Date} dateObj - The date object for the work day.
+         * @param {number} workMinutes - Total actual work minutes.
+         * @param {boolean} isRedDay - True if the day is marked as a red day/holiday.
+         * @returns {Object} An object with minutes for each OB category.
+         */
+        function calculateOB(startMinutesOfDay1, endMinutesOfDay1, dateObj, workMinutes, isRedDay) {
+            let eveningMinutes = 0;
+            let lateEveningMinutes = 0;
+            let saturdayMinutes = 0;
+            let sundayMinutes = 0;
+            let holidayMinutes = 0;
+
+            const dayOfWeek = dateObj.getDay(); // 0=söndag, 1=måndag, ..., 6=lördag
+
+            if (workMinutes <= 0) {
+                return { evening: 0, lateEvening: 0, saturday: 0, sunday: 0, holiday: 0 };
+            }
+
+            // If it's marked as red day, all work time gets holiday rate
+            if (isRedDay) {
+                holidayMinutes = workMinutes;
+                return { evening: 0, lateEvening: 0, saturday: 0, sunday: 0, holiday: holidayMinutes };
+            }
+
+            // If it's Sunday, all work time gets Sunday rate (100%)
+            if (dayOfWeek === 0) { // Sunday
+                sundayMinutes = workMinutes;
+                return { evening: 0, lateEvening: 0, saturday: 0, sunday: sundayMinutes, holiday: 0 };
+            }
+
+            // If it's Saturday, calculate from 12:00 (100%)
+            if (dayOfWeek === 6) { // Saturday
+                const saturdayOBStart = 12 * 60; // 12:00 in minutes
+                const workStart = startMinutesOfDay1;
+                const workEnd = endMinutesOfDay1;
+
+                // Calculate overlap with Saturday OB period (12:00 to 24:00)
+                const obStartActual = Math.max(workStart, saturdayOBStart);
+                const obEndActual = Math.min(workEnd, 24 * 60); // Ensure it doesn't go past midnight for calculation on current day
+                
+                saturdayMinutes = Math.max(0, obEndActual - obStartActual);
+                
+                return { evening: 0, lateEvening: 0, saturday: saturdayMinutes, sunday: 0, holiday: 0 };
+            }
+
+            // Weekdays (Monday-Friday): Calculate OB rates
+            if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                const eveningOBStart = 18 * 60 + 15; // 18:15
+                const lateEveningOBStart = 20 * 60; // 20:00
+
+                const workStart = startMinutesOfDay1;
+                const workEnd = endMinutesOfDay1;
+
+                // Calculate evening OB (18:15 - 19:59)
+                const eveningOverlapStart = Math.max(workStart, eveningOBStart);
+                const eveningOverlapEnd = Math.min(workEnd, lateEveningOBStart);
+                eveningMinutes = Math.max(0, eveningOverlapEnd - eveningOverlapStart);
+
+                // Calculate late evening OB (20:00 - 24:00)
+                const lateEveningOverlapStart = Math.max(workStart, lateEveningOBStart);
+                const lateEveningOverlapEnd = Math.min(workEnd, 24 * 60); // Max to midnight
+                lateEveningMinutes = Math.max(0, lateEveningOverlapEnd - lateEveningOverlapStart);
+            }
+
+            return {
+                evening: eveningMinutes,
+                lateEvening: lateEveningMinutes,
+                saturday: saturdayMinutes,
+                sunday: sundayMinutes,
+                holiday: holidayMinutes
+            };
+        }
+        
+        /**
+         * Calculates the pay for a single row (day).
+         * @param {string} dayId - The unique ID of the day row.
+         */
+        function calculateRow(dayId) {
+            const startInput = document.getElementById(`start_${dayId}`);
+            const endInput = document.getElementById(`end_${dayId}`);
+            const breakInput = document.getElementById(`break_${dayId}`);
+            const dateInput = document.getElementById(`date_${dayId}`);
+            const redDayCheckbox = document.getElementById(`redDay_${dayId}`);
+
+            let currentDayData = allDaysData[dayId];
+
+            // Reset error class
+            startInput.classList.remove('error');
+            endInput.classList.remove('error');
+
+            if (!startInput.value || !endInput.value || !dateInput.value) {
+                // Clear display if inputs are incomplete
+                document.getElementById(`hours_${dayId}`).textContent = '0.0';
+                document.getElementById(`basePay_${dayId}`).textContent = '0 kr';
+                document.getElementById(`obPay_${dayId}`).textContent = '0 kr';
+                document.getElementById(`total_${dayId}`).textContent = '0 kr';
+                document.getElementById(`tax_${dayId}`).textContent = '0 kr';
+                document.getElementById(`net_${dayId}`).textContent = '0 kr';
+                
+                // Update stored data (clear calculated fields)
+                currentDayData.start = startInput.value;
+                currentDayData.end = endInput.value;
+                currentDayData.break = parseInt(breakInput.value) || 0;
+                currentDayData.workHours = 0;
+                currentDayData.basePayAmount = 0;
+                currentDayData.obTotal = 0;
+                currentDayData.totalPay = 0;
+                currentDayData.taxAmount = 0;
+                currentDayData.netPay = 0;
+                currentDayData.obBreakdown = {};
+
+                calculateAll(); // Update total summary
+                return;
+            }
+
+            const startMinutes = timeToMinutes(startInput.value);
+            let endMinutes = timeToMinutes(endInput.value);
+            const breakMinutes = parseInt(breakInput.value) || 0;
+            const dateObj = new Date(dateInput.value);
+            const isRedDay = redDayCheckbox.checked;
+            
+            let workMinutes = 0;
+            let overnight = false;
+
+            // Handle overnight shifts (end time is smaller than start time, means next day)
+            if (endMinutes <= startMinutes) {
+                workMinutes = (24 * 60 - startMinutes) + endMinutes;
+                overnight = true;
+            } else {
+                workMinutes = endMinutes - startMinutes;
+            }
+
+            workMinutes -= breakMinutes;
+            
+            // Basic validation: If work minutes become negative or zero after valid times
+            if ((!overnight && endMinutes < startMinutes) || (workMinutes < 0 && (startInput.value && endInput.value))) {
+                startInput.classList.add('error');
+                endInput.classList.add('error');
+                document.getElementById(`hours_${dayId}`).textContent = 'Ogiltig tid!';
+                // Clear dependent fields
+                document.getElementById(`basePay_${dayId}`).textContent = '0 kr';
+                document.getElementById(`obPay_${dayId}`).textContent = '0 kr';
+                document.getElementById(`total_${dayId}`).textContent = '0 kr';
+                document.getElementById(`tax_${dayId}`).textContent = '0 kr';
+                document.getElementById(`net_${dayId}`).textContent = '0 kr';
+                
+                // Store incomplete data
+                currentDayData.start = startInput.value;
+                currentDayData.end = endInput.value;
+                currentDayData.break = breakMinutes;
+                currentDayData.workHours = 0;
+                currentDayData.basePayAmount = 0;
+                currentDayData.obTotal = 0;
+                currentDayData.totalPay = 0;
+                currentDayData.taxAmount = 0;
+                currentDayData.netPay = 0;
+                currentDayData.obBreakdown = {};
+                calculateAll();
+                return;
+            } else {
+                startInput.classList.remove('error');
+                endInput.classList.remove('error');
+            }
+
+            if (workMinutes < 0) workMinutes = 0; // Ensure work minutes are not negative if break is too long
+            const workHours = minutesToHours(workMinutes);
+            
+            // Get rates
+            const basePay = parseFloat(document.getElementById('basePay').value);
+            const eveningRate = parseFloat(document.getElementById('eveningRate').value) / 100;
+            const lateEveningRate = parseFloat(document.getElementById('lateEveningRate').value) / 100;
+            const saturdayRate = parseFloat(document.getElementById('saturdayRate').value) / 100;
+            const sundayRate = parseFloat(document.getElementById('sundayRate').value) / 100;
+            const holidayRate = parseFloat(document.getElementById('holidayRate').value) / 100;
+            const taxRate = parseFloat(document.getElementById('taxRate').value) / 100;
+
+            // Calculate OB
+            const ob = calculateOB(startMinutes, endMinutes, dateObj, workMinutes, isRedDay);
+            
+            // Calculate pay
+            const basePayAmount = workHours * basePay;
+            const eveningPayAmount = minutesToHours(ob.evening) * basePay * eveningRate;
+            const lateEveningPayAmount = minutesToHours(ob.lateEvening) * basePay * lateEveningRate;
+            const saturdayPayAmount = minutesToHours(ob.saturday) * basePay * saturdayRate;
+            const sundayPayAmount = minutesToHours(ob.sunday) * basePay * sundayRate;
+            const holidayPayAmount = minutesToHours(ob.holiday) * basePay * holidayRate;
+            
+            const obTotal = eveningPayAmount + lateEveningPayAmount + saturdayPayAmount + sundayPayAmount + holidayPayAmount;
+            const totalPay = basePayAmount + obTotal;
+            const taxAmount = totalPay * taxRate;
+            const netPay = totalPay - taxAmount;
+
+            // Update display
+            document.getElementById(`hours_${dayId}`).textContent = workHours.toFixed(1);
+            document.getElementById(`basePay_${dayId}`).textContent = Math.round(basePayAmount) + ' kr';
+            document.getElementById(`obPay_${dayId}`).textContent = Math.round(obTotal) + ' kr';
+            document.getElementById(`total_${dayId}`).textContent = Math.round(totalPay) + ' kr';
+            document.getElementById(`tax_${dayId}`).textContent = Math.round(taxAmount) + ' kr';
+            document.getElementById(`net_${dayId}`).textContent = Math.round(netPay) + ' kr';
+
+            // Store data for this day
+            currentDayData.start = startInput.value;
+            currentDayData.end = endInput.value;
+            currentDayData.break = breakMinutes;
+            currentDayData.workHours = workHours;
+            currentDayData.basePayAmount = basePayAmount;
+            currentDayData.obTotal = obTotal;
+            currentDayData.obBreakdown = ob; // Store breakdown for debugging/future display
+            currentDayData.totalPay = totalPay;
+            currentDayData.taxAmount = taxAmount;
+            currentDayData.netPay = netPay;
+
+            calculateAll(); // Update total summary after each row calculation
+        }
+
+        /**
+         * Calculates and updates the total summary for all days.
+         */
+        function calculateAll() {
+            let totalHours = 0;
+            let totalBasePay = 0;
+            let totalEveningPay = 0;
+            let totalLateEveningPay = 0;
+            let totalSaturdayPay = 0;
+            let totalSundayPay = 0;
+            let totalHolidayPay = 0;
+
+            const taxRate = parseFloat(document.getElementById('taxRate').value) / 100;
+
+            // Iterate over all days in allDaysData
+            for (const dayId in allDaysData) {
+                const dayData = allDaysData[dayId];
+
+                totalHours += dayData.workHours || 0;
+                totalBasePay += dayData.basePayAmount || 0;
+                
+                if (dayData.obBreakdown) {
+                    const basePay = parseFloat(document.getElementById('basePay').value);
+                    const eveningRate = parseFloat(document.getElementById('eveningRate').value) / 100;
+                    const lateEveningRate = parseFloat(document.getElementById('lateEveningRate').value) / 100;
+                    const saturdayRate = parseFloat(document.getElementById('saturdayRate').value) / 100;
+                    const sundayRate = parseFloat(document.getElementById('sundayRate').value) / 100;
+                    const holidayRate = parseFloat(document.getElementById('holidayRate').value) / 100;
+
+                    totalEveningPay += minutesToHours(dayData.obBreakdown.evening) * basePay * eveningRate;
+                    totalLateEveningPay += minutesToHours(dayData.obBreakdown.lateEvening) * basePay * lateEveningRate;
+                    totalSaturdayPay += minutesToHours(dayData.obBreakdown.saturday) * basePay * saturdayRate;
+                    totalSundayPay += minutesToHours(dayData.obBreakdown.sunday) * basePay * sundayRate;
+                    totalHolidayPay += minutesToHours(dayData.obBreakdown.holiday) * basePay * holidayRate;
+                }
+            }
+
+            const grossTotal = totalBasePay + totalEveningPay + totalLateEveningPay + totalSaturdayPay + totalSundayPay + totalHolidayPay;
+            const totalTax = grossTotal * taxRate;
+            const netTotal = grossTotal - totalTax;
+
+            // Update summary display
+            document.getElementById('totalHours').textContent = totalHours.toFixed(1);
+            document.getElementById('totalBasePay').textContent = Math.round(totalBasePay) + ' kr';
+            document.getElementById('totalEveningPay').textContent = Math.round(totalEveningPay) + ' kr';
+            document.getElementById('totalLateEveningPay').textContent = Math.round(totalLateEveningPay) + ' kr';
+            document.getElementById('totalSaturdayPay').textContent = Math.round(totalSaturdayPay) + ' kr';
+            document.getElementById('totalSundayPay').textContent = Math.round(totalSundayPay) + ' kr';
+            document.getElementById('totalHolidayPay').textContent = Math.round(totalHolidayPay) + ' kr';
+            document.getElementById('grandTotal').textContent = Math.round(grossTotal) + ' kr';
+            document.getElementById('taxRateDisplay').textContent = (taxRate * 100).toFixed(1);
+            document.getElementById('totalTax').textContent = Math.round(totalTax) + ' kr';
+            document.getElementById('netTotal').textContent = Math.round(netTotal) + ' kr';
+        }
+
+        /**
+         * Removes a day row from the UI and its data.
+         * @param {string} dayIdToRemove - The unique ID of the day to remove.
+         */
+        function removeDay(dayIdToRemove) {
+            const rowToRemove = document.getElementById(`row_${dayIdToRemove}`);
+            if (rowToRemove) {
+                rowToRemove.remove();
+                delete allDaysData[dayIdToRemove]; // Remove data for this day
+                calculateAll(); // Recalculate totals
+                saveData(); // Save updated data
+            }
+        }
+
+        // --- Data Persistence (localStorage) ---
+
+        /**
+         * Saves all current data (settings and daily data) to localStorage.
+         */
+        function saveData() {
+            const dataToSave = {
+                settings: {
+                    basePay: document.getElementById('basePay').value,
+                    eveningRate: document.getElementById('eveningRate').value,
+                    lateEveningRate: document.getElementById('lateEveningRate').value,
+                    saturdayRate: document.getElementById('saturdayRate').value,
+                    sundayRate: document.getElementById('sundayRate').value,
+                    holidayRate: document.getElementById('holidayRate').value,
+                    taxRate: document.getElementById('taxRate').value
+                },
+                allDaysData: allDaysData,
+                dayCounter: dayCounter
+            };
+            localStorage.setItem('tidrapportData', JSON.stringify(dataToSave));
+            console.log('Data saved!');
+        }
+
+        /**
+         * Loads data from localStorage and populates the form.
+         */
+        function loadData() {
+            const savedData = localStorage.getItem('tidrapportData');
+            if (savedData) {
+                const parsedData = JSON.parse(savedData);
+
+                // Load settings
+                document.getElementById('basePay').value = parsedData.settings.basePay || '162.98';
+                document.getElementById('eveningRate').value = parsedData.settings.eveningRate || '50';
+                document.getElementById('lateEveningRate').value = parsedData.settings.lateEveningRate || '70';
+                document.getElementById('saturdayRate').value = parsedData.settings.saturdayRate || '100';
+                document.getElementById('sundayRate').value = parsedData.settings.sundayRate || '100';
+                document.getElementById('holidayRate').value = parsedData.settings.holidayRate || '100';
+                document.getElementById('taxRate').value = parsedData.settings.taxRate || '30';
+
+                // Re-add days and populate data
+                dayCounter = parsedData.dayCounter || 0; // Set dayCounter to the last saved value
+                allDaysData = parsedData.allDaysData || {}; // Load allDaysData
+
+                const tableBody = document.querySelector('#timeReportTable tbody');
+                tableBody.innerHTML = ''; // Clear existing DOM rows
+
+                // Sort days by date for chronological display
+                const sortedDayIds = Object.keys(allDaysData).sort((idA, idB) => {
+                    const dateA = new Date(allDaysData[idA].date);
+                    const dateB = new Date(allDaysData[idB].date);
+                    return dateA - dateB;
+                });
+
+                sortedDayIds.forEach(dayId => {
+                    const dayData = allDaysData[dayId];
+                    if (!dayData || !dayData.date) return; // Skip invalid data
+
+                    const dateObj = new Date(dayData.date);
+                    const dayName = new Intl.DateTimeFormat('sv-SE', { weekday: 'long' }).format(dateObj);
+                    const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6; // Sunday or Saturday
+
+                    const newRow = tableBody.insertRow();
+                    newRow.id = `row_${dayId}`;
+
+                    // Apply styling based on loaded data
+                    if (isWeekend) {
+                        newRow.classList.add('weekend');
+                    }
+                    if (dayData.redDay) {
+                        newRow.classList.add('red-day');
+                    }
+
+                    newRow.innerHTML = `
+                        <td><input type="date" class="input-field" id="date_${dayId}" value="${dayData.date}" onchange="updateDayData('${dayId}');"></td>
+                        <td id="dayName_${dayId}">${dayName}</td>
+                        <td><input type="checkbox" class="checkbox-field" id="redDay_${dayId}" ${dayData.redDay ? 'checked' : ''} onchange="updateRedDay('${dayId}'); saveData();"></td>
+                        <td><input type="time" class="input-field" id="start_${dayId}" value="${dayData.start}" onchange="calculateRow('${dayId}'); saveData();"></td>
+                        <td><input type="time" class="input-field" id="end_${dayId}" value="${dayData.end}" onchange="calculateRow('${dayId}'); saveData();"></td>
+                        <td><input type="number" class="input-field" id="break_${dayId}" value="${dayData.break}" min="0" onchange="calculateRow('${dayId}'); saveData();"></td>
+                        <td id="hours_${dayId}">${(dayData.workHours || 0).toFixed(1)}</td>
+                        <td id="basePay_${dayId}">${Math.round(dayData.basePayAmount || 0)} kr</td>
+                        <td id="obPay_${dayId}">${Math.round(dayData.obTotal || 0)} kr</td>
+                        <td id="total_${dayId}">${Math.round(dayData.totalPay || 0)} kr</td>
+                        <td id="tax_${dayId}">${Math.round(dayData.taxAmount || 0)} kr</td>
+                        <td id="net_${dayId}">${Math.round(dayData.netPay || 0)} kr</td>
+                        <td><button class="remove-day-btn" onclick="removeDay('${dayId}')">X</button></td>
+                    `;
+                    // Recalculate row to ensure displayed values are correct even if breakdown wasn't fully saved (or rates changed)
+                    calculateRow(dayId); 
+                });
+                calculateAll(); // Ensure totals are updated after all days are loaded
+            }
+        }
+
+        /**
+         * Clears all saved data from localStorage and resets the application state.
+         */
+        function clearAllData() {
+            if (confirm('Är du säker på att du vill rensa all sparad data? Detta kan inte ångras!')) {
+                localStorage.removeItem('tidrapportData');
+                allDaysData = {};
+                dayCounter = 0;
+                document.querySelector('#timeReportTable tbody').innerHTML = ''; // Clear UI
+                // Reset settings to default values
+                document.getElementById('basePay').value = "162.98";
+                document.getElementById('eveningRate').value = "50";
+                document.getElementById('lateEveningRate').value = "70";
+                document.getElementById('saturdayRate').value = "100";
+                document.getElementById('sundayRate').value = "100";
+                document.getElementById('holidayRate').value = "100";
+                document.getElementById('taxRate').value = "30";
+                
+                calculateAll(); // Recalculate totals (should be zero)
+                console.log('All data cleared!');
+            }
+        }
+
+        // --- Export Functionality ---
+
+        /**
+         * Exports all data to a CSV file.
+         */
+        function exportData() {
+            let csv = 'Datum,Dag,Röd dag,Starttid,Sluttid,Rast (min),Arbetstid (timmar),Grundlön (kr),OB-tillägg (kr),Bruttolön (kr),Skatt (kr),Nettolön (kr)\n';
+            
+            // Sort days by date for chronological order in CSV
+            const sortedDayIds = Object.keys(allDaysData).sort((idA, idB) => {
+                const dateA = new Date(allDaysData[idA].date);
+                const dateB = new Date(allDaysData[idB].date);
+                return dateA - dateB;
+            });
+
+            sortedDayIds.forEach(dayId => {
+                const dayData = allDaysData[dayId];
+                if (dayData && dayData.date) { // Ensure data exists for the day
+                    const redDay = dayData.redDay ? 'Ja' : 'Nej';
+                    const dateObj = new Date(dayData.date);
+                    const dayName = new Intl.DateTimeFormat('sv-SE', { weekday: 'long' }).format(dateObj);
+                    
+                    csv += `${dayData.date},${dayName},${redDay},${dayData.start || ''},${dayData.end || ''},${dayData.break || '0'},${(dayData.workHours || 0).toFixed(1)},${Math.round(dayData.basePayAmount || 0)},${Math.round(dayData.obTotal || 0)},${Math.round(dayData.totalPay || 0)},${Math.round(dayData.taxAmount || 0)},${Math.round(dayData.netPay || 0)}\n`;
+                }
+            });
+
+            // Add summary row
+            const totalHours = document.getElementById('totalHours').textContent;
+            const grandTotal = document.getElementById('grandTotal').textContent.replace(' kr', '');
+            const totalTax = document.getElementById('totalTax').textContent.replace(' kr', '');
+            const netTotal = document.getElementById('netTotal').textContent.replace(' kr', '');
+            csv += `\nSummering,,,,,,,${totalHours},,,${grandTotal},${totalTax},${netTotal}\n`;
+
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tidrapport.csv';
+            document.body.appendChild(a); // Append to body is good practice
+            a.click();
+            document.body.removeChild(a); // Clean up
+            window.URL.revokeObjectURL(url);
+        }
+
+        // --- Event Listeners and Initial Setup ---
+
+        // Add event listeners to settings inputs to trigger recalculation and saving
+        document.getElementById('basePay').addEventListener('input', () => { calculateAll(); saveData(); });
+        document.getElementById('eveningRate').addEventListener('input', () => { calculateAll(); saveData(); });
+        document.getElementById('lateEveningRate').addEventListener('input', () => { calculateAll(); saveData(); });
+        document.getElementById('saturdayRate').addEventListener('input', () => { calculateAll(); saveData(); });
+        document.getElementById('sundayRate').addEventListener('input', () => { calculateAll(); saveData(); });
+        document.getElementById('holidayRate').addEventListener('input', () => { calculateAll(); saveData(); });
+        document.getElementById('taxRate').addEventListener('input', () => { calculateAll(); saveData(); });
+
+        // Initial setup
+        document.addEventListener('DOMContentLoaded', () => {
+            updateClock();
+            setInterval(updateClock, 1000);
+            loadData(); // Try to load saved data on page load
+            if (Object.keys(allDaysData).length === 0) {
+                // If no data was loaded, add an initial day for convenience
+                addDay(); 
+            }
+        });
+    </script>
 </body>
 </html>
